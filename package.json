@@ -1,0 +1,18 @@
+{
+  "name": "hypertrophy-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PWA tracker protocollo ipertrofia 3+1",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "icons": "node scripts/generate-icons.js"
+  },
+  "devDependencies": {
+    "sharp": "^0.33.5",
+    "vite": "^5.4.10",
+    "vite-plugin-pwa": "^0.21.0"
+  }
+}

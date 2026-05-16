@@ -1,0 +1,714 @@
+/* =====================================================================
+   PROTOCOLLO IPERTROFIA — 3+1 split
+   PWA — vanilla JS + localStorage + vite-plugin-pwa
+   ===================================================================== */
+
+import { registerSW } from 'virtual:pwa-register';
+
+// SW: alla nuova versione mostriamo un banner discreto
+const updateSW = registerSW({
+  onNeedRefresh() {
+    showUpdateBanner(() => updateSW(true));
+  },
+  onOfflineReady() {
+    showToast('Offline ready');
+  }
+});
+
+/* ============== DEFAULT PROGRAM ============== */
+const DEFAULT_PROGRAM = {
+  lun: {
+    name: 'Dorso & Tricipiti + Avambracci',
+    label: 'Giorno 1 · Lunedì',
+    exercises: [
+      { id:'l1', name:'Lat Machine (pulldown)', target:'Gran dorsale, bicipiti', sets:4, reps:'8-12', rest:120,
+        cue:'Petto in fuori, scapole giù e indietro. Tira con i gomiti — non con le mani. Sbarra al petto alto, eccentrica controllata 2-3 sec.',
+        video:'lat pulldown tutorial corretto' },
+      { id:'l2', name:'Rematore / Row machine', target:'Mid-back, romboidi, dorso', sets:4, reps:'8-10', rest:120,
+        cue:'Busto inclinato 30-45°, schiena neutra. Tira al basso sterno spingendo i gomiti dietro. Niente strappi col bacino.',
+        video:'rematore bilanciere forma corretta' },
+      { id:'l3', name:'Pulley basso (seated row)', target:'Mid-back, gran dorsale', sets:3, reps:'10-12', rest:90,
+        cue:'Schiena dritta, scapole abbassate. Tira fino all\'ombelico, 1 sec di squeeze in contrazione.',
+        video:'pulley basso seduto tecnica' },
+      { id:'l4', name:'Pull-over al cavo alto', target:'Gran dorsale (stretch)', sets:3, reps:'12-15', rest:75,
+        cue:'Braccia leggermente piegate FISSE, scendi tirando con i dorsali. Cerca il massimo allungamento in alto.',
+        video:'straight arm pulldown lat' },
+      { id:'l5', name:'Push-down cavi con sbarra', target:'Tricipiti (capo lungo+laterale)', sets:4, reps:'8-12', rest:90,
+        cue:'Gomiti incollati ai fianchi e fermi. Estendi solo l\'avambraccio. Pausa 1 sec in contrazione massima.',
+        video:'pushdown cavi sbarra tricipiti' },
+      { id:'l6', name:'French press con manubrio', target:'Tricipiti (capo lungo)', sets:3, reps:'10-12', rest:90,
+        cue:'Gomiti stretti vicino alla testa, scendi dietro la nuca lentamente. Solo l\'avambraccio si muove.',
+        video:'french press manubrio overhead extension' },
+      { id:'l7', name:'Push-down corda', target:'Tricipiti (capo laterale)', sets:3, reps:'12-15', rest:60,
+        cue:'In basso ruota i polsi verso l\'esterno e allarga la corda per massima contrazione del laterale.',
+        video:'pushdown corda tricipiti rope' },
+      { id:'l8', name:'Avambracci proni (reverse curl)', target:'Brachioradiale, estensori', sets:3, reps:'12-15', rest:60,
+        cue:'Bilanciere piccolo con presa pronata (palmi giù). Gomiti fissi, eccentrica lenta 3 sec.',
+        video:'reverse curl bilanciere avambracci' },
+      { id:'l9', name:'Avambracci supini (wrist curl)', target:'Flessori avambraccio', sets:3, reps:'15-20', rest:45,
+        cue:'Avambracci appoggiati sulle cosce, palmi in su. Solo i polsi si muovono, range completo flessione-estensione.',
+        video:'wrist curl flessori avambraccio' }
+    ]
+  },
+  mer: {
+    name: 'Gambe & Spalle',
+    label: 'Giorno 2 · Mercoledì',
+    exercises: [
+      { id:'m1', name:'Hack Squat', target:'Quadricipiti, glutei', sets:4, reps:'8-10', rest:150,
+        cue:'Piedi a metà pedana, larghezza spalle. Scendi controllato fino a coscia parallela. Spingi dai talloni, non bloccare ginocchia in alto.',
+        video:'hack squat machine tutorial' },
+      { id:'m2', name:'Pressa 45°', target:'Quadricipiti, glutei', sets:4, reps:'10-12', rest:120,
+        cue:'Piedi alti+larghi → più glutei/femorali. Piedi bassi+stretti → più quadricipiti. Schiena sempre piatta sullo schienale.',
+        video:'pressa 45 gradi tecnica' },
+      { id:'m3', name:'Leg Extension', target:'Quadricipiti', sets:3, reps:'12-15', rest:75,
+        cue:'Estendi completamente, contrai 1 sec in alto. Eccentrica controllata 2-3 sec. Niente slancio.',
+        video:'leg extension corretto quadricipiti' },
+      { id:'m4', name:'Leg Curl', target:'Femorali', sets:4, reps:'10-12', rest:90,
+        cue:'Spingi le anche verso il pad, non staccare il bacino. Range completo, 1 sec di squeeze in contrazione.',
+        video:'leg curl femorali sdraiato' },
+      { id:'m5', name:'Calf (pressa o standing)', target:'Polpacci', sets:4, reps:'12-15', rest:60,
+        cue:'Massima estensione in alto (1 sec pausa), massimo allungamento in basso (1 sec pausa). Lavora il ROM completo.',
+        video:'calf raise polpacci pressa' },
+      { id:'m6', name:'Lento avanti con manubri', target:'Deltoidi anteriori+laterali, tricipiti', sets:4, reps:'8-12', rest:120,
+        cue:'Schiena appoggiata, gomiti leggermente avanti rispetto alle spalle (non sul piano frontale puro). Non bloccare i gomiti.',
+        video:'shoulder press manubri seduto' },
+      { id:'m7', name:'Alzate laterali', target:'Deltoide laterale', sets:4, reps:'12-15', rest:60,
+        cue:'Leggera flessione busto in avanti. I gomiti guidano. Mignolo leggermente più alto del pollice in alto. Niente swing.',
+        video:'alzate laterali deltoide tutorial' },
+      { id:'m8', name:'Alzate frontali', target:'Deltoide anteriore', sets:3, reps:'12-15', rest:60,
+        cue:'Solleva fino all\'altezza spalla. Eccentrica controllata. Evita di compensare con il trapezio.',
+        video:'alzate frontali manubri' },
+      { id:'m9', name:'Rear delt (face pull o reverse fly)', target:'Deltoide posteriore, rotatori', sets:4, reps:'12-15', rest:60,
+        cue:'Tira con i gomiti, separa le mani all\'altezza degli occhi. Squeeze scapolare. KEY per postura.',
+        video:'face pull rear delt tutorial' }
+    ]
+  },
+  ven: {
+    name: 'Petto & Bicipiti + Avambracci',
+    label: 'Giorno 3 · Venerdì',
+    exercises: [
+      { id:'v1', name:'Panca piana bilanciere', target:'Pettorali, deltoidi ant., tricipiti', sets:4, reps:'6-8', rest:150,
+        cue:'Scapole retratte e abbassate (arco fisiologico). Bilanciere tocca leggermente lo sterno. Spingi anche con i piedi a terra.',
+        video:'panca piana bilanciere tecnica corretta' },
+      { id:'v2', name:'Panca inclinata con manubri (30-45°)', target:'Pettorale alto, deltoidi ant.', sets:4, reps:'8-10', rest:120,
+        cue:'Manubri in linea con i capezzoli, palmi avanti. Scendi controllato, in alto non far toccare i manubri (mantieni tensione).',
+        video:'panca inclinata manubri 30 gradi' },
+      { id:'v3', name:'Chest press macchina', target:'Pettorale medio', sets:3, reps:'10-12', rest:90,
+        cue:'Schiena appoggiata, impugnatura in linea coi capezzoli. Pausa 1 sec di squeeze al picco.',
+        video:'chest press macchina petto' },
+      { id:'v4', name:'Pectoral machine (croci)', target:'Pettorale (adduzione)', sets:3, reps:'12-15', rest:75,
+        cue:'Gomiti leggermente piegati e fissi. Focus sulla contrazione, non sul peso. Squeeze 1 sec al centro.',
+        video:'pectoral machine croci petto' },
+      { id:'v5', name:'Curl cavo basso con sbarra', target:'Bicipiti (entrambi i capi)', sets:4, reps:'8-12', rest:90,
+        cue:'Gomiti FISSI ai fianchi. Niente swing del busto. Solo gli avambracci si muovono. Eccentrica 2 sec.',
+        video:'curl cavo basso sbarra bicipiti' },
+      { id:'v6', name:'Curl con manubri', target:'Bicipiti (capo lungo)', sets:3, reps:'10-12', rest:90,
+        cue:'Supina il polso ruotando durante la salita (palmo verso l\'alto). Picco di contrazione 1 sec.',
+        video:'curl manubri bicipiti tecnica' },
+      { id:'v7', name:'Hammer curl (martello)', target:'Brachiale, brachioradiale', sets:3, reps:'10-12', rest:75,
+        cue:'Presa neutra fissa per tutto il movimento. Gomiti fermi. Costruisce volume "spessore" del braccio.',
+        video:'hammer curl bicipiti brachiale' },
+      { id:'v8', name:'Avambracci proni (reverse curl)', target:'Brachioradiale, estensori', sets:3, reps:'12-15', rest:60,
+        cue:'Bilanciere piccolo, presa pronata. Gomiti fissi. Eccentrica lenta.',
+        video:'reverse curl bilanciere avambracci' },
+      { id:'v9', name:'Avambracci supini (wrist curl)', target:'Flessori avambraccio', sets:3, reps:'15-20', rest:45,
+        cue:'Avambracci appoggiati, palmi in su. Range completo. Ottimo come finisher.',
+        video:'wrist curl flessori avambraccio' }
+    ]
+  },
+  extra: {
+    name: 'Richiamo Upper (opzionale)',
+    label: 'Giorno 4 · Bonus',
+    exercises: [
+      { id:'x1', name:'Lat machine (presa stretta)', target:'Dorso, bicipiti', sets:3, reps:'10-12', rest:90,
+        cue:'Variante alla seduta del lunedì. Presa stretta neutra/supina per più coinvolgimento dorso basso.',
+        video:'lat pulldown presa stretta' },
+      { id:'x2', name:'Chest press o panca inclinata', target:'Pettorale', sets:3, reps:'10-12', rest:90,
+        cue:'Carica al 70-80% di quanto fai il venerdì. Obiettivo: volume aggiuntivo a freschezza.',
+        video:'chest press tutorial' },
+      { id:'x3', name:'Alzate laterali (drop set)', target:'Deltoide laterale', sets:3, reps:'12+8+6', rest:60,
+        cue:'Ultima serie: drop set triplice. Carico iniziale moderato → scendi 2 volte senza recupero.',
+        video:'alzate laterali drop set' },
+      { id:'x4', name:'Curl manubri o cavo', target:'Bicipiti', sets:3, reps:'12-15', rest:60,
+        cue:'Range alto-rep per pump. Variante diversa da quella del venerdì.',
+        video:'curl bicipiti high rep' },
+      { id:'x5', name:'Push-down corda', target:'Tricipiti', sets:3, reps:'12-15', rest:60,
+        cue:'Pump finale, ROM completo, focus sulla contrazione del capo laterale.',
+        video:'pushdown corda tricipiti pump' },
+      { id:'x6', name:'Face pull', target:'Rear delt, rotatori (postura)', sets:3, reps:'15-20', rest:45,
+        cue:'Sempre presente nei richiami: rinforza i muscoli posturali, equilibrio con pressori.',
+        video:'face pull postura rotatori' }
+    ]
+  }
+};
+
+const DAYS_ORDER = ['lun','mer','ven','extra'];
+
+/* ============== STATE ============== */
+let state = {
+  program: null,
+  session: { day: null, date: null, sets: {} },
+  history: [],
+  activeDay: 'lun',
+  view: 'workout',
+  expanded: new Set(),
+  editingExerciseId: null,
+  timer: { remaining: 0, total: 0, intervalId: null, exId: null }
+};
+
+/* ============== STORAGE LAYER (localStorage) ============== */
+const KEYS = {
+  PROGRAM: 'program-v1',
+  SESSION: 'session-current',
+  HISTORY: 'history',
+};
+
+async function storageGet(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw == null) return fallback;
+    return JSON.parse(raw);
+  } catch (e) {
+    return fallback;
+  }
+}
+async function storageSet(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    showToast('Errore salvataggio');
+  }
+}
+
+/* ============== INIT ============== */
+async function init() {
+  state.program = await storageGet(KEYS.PROGRAM, DEFAULT_PROGRAM);
+  for (const d of DAYS_ORDER) {
+    if (!state.program[d]) state.program[d] = DEFAULT_PROGRAM[d];
+  }
+  state.history = await storageGet(KEYS.HISTORY, []);
+  state.session = await storageGet(KEYS.SESSION, { day:null, date:null, sets:{} });
+
+  const today = new Date();
+  const dow = today.getDay();
+  const dowToDay = { 1:'lun', 3:'mer', 5:'ven' };
+  state.activeDay = dowToDay[dow] || (state.session.day || 'lun');
+
+  if (state.session.day !== state.activeDay || !isToday(state.session.date)) {
+    state.session = { day: state.activeDay, date: dateKey(today), sets: {} };
+    await storageSet(KEYS.SESSION, state.session);
+  }
+
+  bindEvents();
+  render();
+}
+
+function isToday(dateStr) {
+  if (!dateStr) return false;
+  return dateStr === dateKey(new Date());
+}
+function dateKey(d) {
+  return d.toISOString().slice(0,10);
+}
+function fmtDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('it-IT', { weekday:'short', day:'2-digit', month:'short' });
+}
+
+/* ============== RENDER ============== */
+function render() {
+  renderTabs();
+  if (state.view === 'workout') {
+    document.getElementById('workoutView').classList.remove('hidden');
+    document.getElementById('historyView').classList.add('hidden');
+    renderDay();
+  } else {
+    document.getElementById('workoutView').classList.add('hidden');
+    document.getElementById('historyView').classList.remove('hidden');
+    renderHistory();
+  }
+  renderStats();
+}
+
+function renderTabs() {
+  document.querySelectorAll('nav.days button').forEach(b => {
+    b.classList.toggle('active', b.dataset.day === state.activeDay);
+  });
+}
+
+function renderDay() {
+  const day = state.program[state.activeDay];
+  document.getElementById('dayNum').textContent = day.label;
+  document.getElementById('dayTitle').textContent = day.name;
+
+  const container = document.getElementById('exercises');
+  container.innerHTML = '';
+
+  day.exercises.forEach((ex, idx) => {
+    container.appendChild(exerciseCard(ex, idx));
+  });
+}
+
+function exerciseCard(ex, idx) {
+  const card = document.createElement('div');
+  card.className = 'exercise';
+  card.dataset.id = ex.id;
+  if (state.expanded.has(ex.id)) card.classList.add('expanded');
+
+  const sessSets = state.session.sets[ex.id] || initSets(ex.sets);
+  state.session.sets[ex.id] = sessSets;
+  const doneCount = sessSets.filter(s => s.done).length;
+  if (doneCount === sessSets.length && sessSets.length > 0) card.classList.add('complete');
+
+  const last = findLastSessionFor(ex.id);
+
+  card.innerHTML = `
+    <div class="ex-head">
+      <span class="ex-num">${String(idx+1).padStart(2,'0')}</span>
+      <div class="ex-title-wrap">
+        <div class="ex-title">${esc(ex.name)}</div>
+        <div class="ex-sub"><b>${ex.sets}x${esc(ex.reps)}</b> · rec <b>${ex.rest}s</b> · ${esc(ex.target)}</div>
+      </div>
+      <span class="ex-sub" style="font-family:'JetBrains Mono',monospace;color:${doneCount===sessSets.length && doneCount>0?'var(--accent)':'var(--text-dimmer)'};">${doneCount}/${sessSets.length}</span>
+      <span class="ex-chevron">▸</span>
+    </div>
+    <div class="ex-body">
+      <div class="cue">
+        <span class="cue-label">TECNICA</span>
+        ${esc(ex.cue)}
+      </div>
+      <a class="video-link" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(ex.video)}">
+        Guarda su YouTube · ${esc(ex.video)}
+      </a>
+      ${last ? `<div class="history-line">Ultima volta (${fmtDate(last.date)}): <b>${last.summary}</b></div>` : ''}
+      <div class="sets-wrap">
+        <div class="sets-header">
+          <div>Set</div>
+          <div>Kg</div>
+          <div>Reps</div>
+          <div>Target</div>
+          <div>OK</div>
+        </div>
+        ${sessSets.map((s, i) => `
+          <div class="set-row ${s.done?'done':''}" data-set="${i}">
+            <div class="set-num">${i+1}</div>
+            <input class="set-input" data-field="w" type="number" inputmode="decimal" step="0.5" value="${s.w ?? ''}" placeholder="—">
+            <input class="set-input" data-field="r" type="number" inputmode="numeric" value="${s.r ?? ''}" placeholder="—">
+            <div class="set-hint">${esc(ex.reps)}</div>
+            <button class="set-check" data-action="toggle">${s.done?'✓':''}</button>
+          </div>
+        `).join('')}
+      </div>
+      <div class="set-actions">
+        <div class="left">
+          <button class="mini-btn" data-action="addset">+ serie</button>
+          <button class="mini-btn" data-action="removeset">− serie</button>
+          <button class="mini-btn" data-action="reset">Reset</button>
+        </div>
+        <div class="right">
+          <button class="mini-btn" data-action="edit">Modifica</button>
+          <button class="mini-btn danger" data-action="delete">Elimina</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  card.querySelector('.ex-head').addEventListener('click', (e) => {
+    if (e.target.closest('button, input, a')) return;
+    toggleExpand(ex.id);
+  });
+
+  card.querySelectorAll('.set-row').forEach(row => {
+    const setIdx = parseInt(row.dataset.set);
+    row.querySelectorAll('.set-input').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const field = e.target.dataset.field;
+        const val = e.target.value === '' ? null : parseFloat(e.target.value);
+        sessSets[setIdx][field] = isNaN(val) ? null : val;
+        saveSession();
+      });
+    });
+    row.querySelector('[data-action="toggle"]').addEventListener('click', () => {
+      sessSets[setIdx].done = !sessSets[setIdx].done;
+      if (sessSets[setIdx].done) {
+        startRestTimer(ex.rest, ex.name + ' · serie ' + (setIdx+1), ex.id);
+      }
+      saveSession();
+      render();
+    });
+  });
+
+  card.querySelector('[data-action="addset"]').addEventListener('click', () => {
+    sessSets.push({ w:null, r:null, done:false });
+    saveSession();
+    render();
+  });
+  card.querySelector('[data-action="removeset"]').addEventListener('click', () => {
+    if (sessSets.length > 1) {
+      sessSets.pop();
+      saveSession();
+      render();
+    }
+  });
+  card.querySelector('[data-action="reset"]').addEventListener('click', () => {
+    if (confirm('Cancellare i dati di questa sessione per ' + ex.name + '?')) {
+      state.session.sets[ex.id] = initSets(ex.sets);
+      saveSession();
+      render();
+    }
+  });
+  card.querySelector('[data-action="edit"]').addEventListener('click', () => openEdit(ex.id));
+  card.querySelector('[data-action="delete"]').addEventListener('click', () => deleteExercise(ex.id));
+
+  return card;
+}
+
+function initSets(n) {
+  return Array.from({length: n}, () => ({ w:null, r:null, done:false }));
+}
+
+function toggleExpand(id) {
+  if (state.expanded.has(id)) state.expanded.delete(id);
+  else state.expanded.add(id);
+  render();
+}
+
+function esc(s) {
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ============== STATS ============== */
+function renderStats() {
+  const now = new Date();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((now.getDay()+6)%7));
+  monday.setHours(0,0,0,0);
+  document.getElementById('weekNum').textContent = isoWeek(now);
+
+  let vol = 0, setsCount = 0;
+  const sessions = [...state.history];
+  if (state.session.day && state.session.sets) {
+    sessions.push({ date: state.session.date, day: state.session.day, sets: state.session.sets });
+  }
+  for (const s of sessions) {
+    const d = new Date(s.date + 'T00:00:00');
+    if (d >= monday) {
+      for (const exId in s.sets) {
+        for (const set of s.sets[exId]) {
+          if (set.done && set.w && set.r) {
+            vol += set.w * set.r;
+            setsCount++;
+          }
+        }
+      }
+    }
+  }
+  document.getElementById('weekVol').textContent = vol.toLocaleString('it-IT');
+  document.getElementById('weekSets').textContent = setsCount;
+}
+
+function isoWeek(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay()||7));
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1)/7);
+}
+
+/* ============== HISTORY ============== */
+function findLastSessionFor(exId) {
+  for (let i = state.history.length - 1; i >= 0; i--) {
+    const s = state.history[i];
+    if (s.sets[exId]) {
+      const done = s.sets[exId].filter(x => x.done && x.w && x.r);
+      if (done.length === 0) continue;
+      const top = done.reduce((a,b) => (a.w*a.r > b.w*b.r ? a : b));
+      const summary = done.map(x => `${x.w}×${x.r}`).join(', ');
+      return { date: s.date, summary, top };
+    }
+  }
+  return null;
+}
+
+function renderHistory() {
+  const container = document.getElementById('historyList');
+  if (state.history.length === 0) {
+    container.innerHTML = '<div class="empty">Nessuna sessione registrata. Completa una giornata e chiudila per vederla qui.</div>';
+    return;
+  }
+  container.innerHTML = '';
+  const sorted = [...state.history].reverse();
+  for (const s of sorted) {
+    const day = state.program[s.day];
+    const card = document.createElement('div');
+    card.className = 'history-card';
+    const exNames = day ? day.name : s.day;
+    card.innerHTML = `
+      <h4>${esc(exNames)}</h4>
+      <div class="h-date">${fmtDate(s.date)}</div>
+      ${Object.keys(s.sets).map(exId => {
+        const sets = s.sets[exId].filter(x => x.done && x.w && x.r);
+        if (sets.length === 0) return '';
+        const exDef = day && day.exercises.find(e => e.id === exId);
+        const name = exDef ? exDef.name : exId;
+        return `<div class="h-ex"><b>${esc(name)}</b><span class="sets">${sets.map(x => x.w+'×'+x.r).join(' · ')}</span></div>`;
+      }).join('')}
+    `;
+    container.appendChild(card);
+  }
+}
+
+/* ============== SAVE ============== */
+let saveTimer = null;
+function saveSession() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => storageSet(KEYS.SESSION, state.session), 400);
+}
+
+async function saveProgram() {
+  await storageSet(KEYS.PROGRAM, state.program);
+}
+
+async function finishDay() {
+  const hasData = Object.values(state.session.sets).some(arr =>
+    arr.some(s => s.done && s.w && s.r)
+  );
+  if (!hasData) {
+    if (!confirm('Nessuna serie completata. Chiudere comunque senza salvare nello storico?')) return;
+    state.session = { day: state.activeDay, date: dateKey(new Date()), sets: {} };
+    await storageSet(KEYS.SESSION, state.session);
+    render();
+    return;
+  }
+  if (!confirm('Chiudere la sessione e salvarla nello storico?')) return;
+  state.history.push({
+    date: state.session.date,
+    day: state.session.day,
+    sets: JSON.parse(JSON.stringify(state.session.sets))
+  });
+  await storageSet(KEYS.HISTORY, state.history);
+  state.session = { day: state.activeDay, date: dateKey(new Date()), sets: {} };
+  await storageSet(KEYS.SESSION, state.session);
+  showToast('Sessione salvata');
+  render();
+}
+
+async function resetDay() {
+  if (!confirm('Cancellare i dati di oggi (non ancora salvati nello storico)?')) return;
+  state.session.sets = {};
+  await storageSet(KEYS.SESSION, state.session);
+  render();
+}
+
+async function clearHistory() {
+  if (!confirm('CANCELLARE TUTTO LO STORICO? Operazione irreversibile.')) return;
+  state.history = [];
+  await storageSet(KEYS.HISTORY, []);
+  render();
+}
+
+/* ============== EDIT MODAL ============== */
+function openEdit(exId) {
+  state.editingExerciseId = exId;
+  const day = state.program[state.activeDay];
+  const ex = day.exercises.find(e => e.id === exId);
+  if (!ex) return;
+  document.getElementById('editTitle').textContent = 'Modifica · ' + ex.name;
+  document.getElementById('ed-name').value = ex.name;
+  document.getElementById('ed-target').value = ex.target;
+  document.getElementById('ed-sets').value = ex.sets;
+  document.getElementById('ed-reps').value = ex.reps;
+  document.getElementById('ed-rest').value = ex.rest;
+  document.getElementById('ed-cue').value = ex.cue;
+  document.getElementById('ed-video').value = ex.video;
+  document.getElementById('ed-delete').classList.remove('hidden');
+  document.getElementById('editModal').classList.add('active');
+}
+
+function openAdd() {
+  state.editingExerciseId = null;
+  document.getElementById('editTitle').textContent = 'Nuovo esercizio';
+  document.getElementById('ed-name').value = '';
+  document.getElementById('ed-target').value = '';
+  document.getElementById('ed-sets').value = 3;
+  document.getElementById('ed-reps').value = '10-12';
+  document.getElementById('ed-rest').value = 90;
+  document.getElementById('ed-cue').value = '';
+  document.getElementById('ed-video').value = '';
+  document.getElementById('ed-delete').classList.add('hidden');
+  document.getElementById('editModal').classList.add('active');
+}
+
+function closeEdit() {
+  document.getElementById('editModal').classList.remove('active');
+  state.editingExerciseId = null;
+}
+
+async function saveEdit() {
+  const day = state.program[state.activeDay];
+  const data = {
+    name: document.getElementById('ed-name').value.trim() || 'Esercizio',
+    target: document.getElementById('ed-target').value.trim(),
+    sets: Math.max(1, parseInt(document.getElementById('ed-sets').value) || 3),
+    reps: document.getElementById('ed-reps').value.trim() || '8-12',
+    rest: Math.max(15, parseInt(document.getElementById('ed-rest').value) || 90),
+    cue: document.getElementById('ed-cue').value.trim(),
+    video: document.getElementById('ed-video').value.trim() || (document.getElementById('ed-name').value + ' tutorial')
+  };
+  if (state.editingExerciseId) {
+    const ex = day.exercises.find(e => e.id === state.editingExerciseId);
+    Object.assign(ex, data);
+    const sess = state.session.sets[ex.id];
+    if (sess) {
+      while (sess.length < data.sets) sess.push({ w:null, r:null, done:false });
+      while (sess.length > data.sets) sess.pop();
+    }
+  } else {
+    const newId = 'u' + Date.now();
+    day.exercises.push({ id:newId, ...data });
+  }
+  await saveProgram();
+  await storageSet(KEYS.SESSION, state.session);
+  closeEdit();
+  render();
+  showToast(state.editingExerciseId ? 'Esercizio aggiornato' : 'Esercizio aggiunto');
+}
+
+async function deleteExercise(exId) {
+  const day = state.program[state.activeDay];
+  const ex = day.exercises.find(e => e.id === exId);
+  if (!ex) return;
+  if (!confirm('Eliminare definitivamente "' + ex.name + '" dal programma?')) return;
+  day.exercises = day.exercises.filter(e => e.id !== exId);
+  delete state.session.sets[exId];
+  state.expanded.delete(exId);
+  await saveProgram();
+  await storageSet(KEYS.SESSION, state.session);
+  closeEdit();
+  render();
+  showToast('Esercizio eliminato');
+}
+
+/* ============== REST TIMER ============== */
+function startRestTimer(seconds, label, exId) {
+  stopTimer();
+  state.timer.total = seconds;
+  state.timer.remaining = seconds;
+  state.timer.exId = exId;
+  document.getElementById('restLabel').textContent = label;
+  const elTimer = document.getElementById('restTimer');
+  elTimer.classList.add('active');
+  elTimer.classList.remove('warn','done');
+  updateTimerDisplay();
+  state.timer.intervalId = setInterval(() => {
+    state.timer.remaining--;
+    if (state.timer.remaining <= 10 && state.timer.remaining > 0) {
+      elTimer.classList.add('warn');
+    }
+    if (state.timer.remaining <= 0) {
+      elTimer.classList.remove('warn');
+      elTimer.classList.add('done');
+      document.getElementById('restTime').textContent = 'GO';
+      clearInterval(state.timer.intervalId);
+      state.timer.intervalId = null;
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
+        osc.start(); osc.stop(ctx.currentTime + 0.4);
+      } catch(e) {}
+      // vibrazione su mobile (se supportata)
+      try { if (navigator.vibrate) navigator.vibrate([120, 60, 120]); } catch(e) {}
+      setTimeout(() => { elTimer.classList.remove('active','done'); }, 4000);
+      return;
+    }
+    updateTimerDisplay();
+  }, 1000);
+}
+function updateTimerDisplay() {
+  const r = Math.max(0, state.timer.remaining);
+  const m = Math.floor(r/60), s = r%60;
+  document.getElementById('restTime').textContent =
+    String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+function stopTimer() {
+  if (state.timer.intervalId) clearInterval(state.timer.intervalId);
+  state.timer.intervalId = null;
+  state.timer.remaining = 0;
+  document.getElementById('restTimer').classList.remove('active','warn','done');
+}
+
+/* ============== TOAST + UPDATE BANNER ============== */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function showUpdateBanner(onAccept) {
+  let banner = document.getElementById('updateBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'updateBanner';
+    banner.className = 'update-banner';
+    banner.innerHTML = '<span>Nuova versione</span> <button>Aggiorna</button>';
+    document.body.appendChild(banner);
+  }
+  banner.classList.add('show');
+  banner.querySelector('button').onclick = () => {
+    banner.classList.remove('show');
+    onAccept();
+  };
+}
+
+/* ============== EVENTS ============== */
+function bindEvents() {
+  document.querySelectorAll('nav.days button').forEach(b => {
+    b.addEventListener('click', async () => {
+      state.activeDay = b.dataset.day;
+      if (state.session.day !== state.activeDay) {
+        state.session = { day: state.activeDay, date: dateKey(new Date()), sets: {} };
+        await storageSet(KEYS.SESSION, state.session);
+      }
+      state.view = 'workout';
+      render();
+    });
+  });
+
+  document.getElementById('btnViewToggle').addEventListener('click', () => {
+    state.view = (state.view === 'workout') ? 'history' : 'workout';
+    document.getElementById('btnViewToggle').textContent = state.view === 'workout' ? 'Storico' : 'Allenamento';
+    render();
+  });
+
+  document.getElementById('btnResetDay').addEventListener('click', resetDay);
+  document.getElementById('btnFinishDay').addEventListener('click', finishDay);
+  document.getElementById('btnAddExercise').addEventListener('click', openAdd);
+  document.getElementById('btnClearHistory').addEventListener('click', clearHistory);
+
+  document.getElementById('ed-cancel').addEventListener('click', closeEdit);
+  document.getElementById('ed-save').addEventListener('click', saveEdit);
+  document.getElementById('ed-delete').addEventListener('click', () => {
+    if (state.editingExerciseId) deleteExercise(state.editingExerciseId);
+  });
+  document.getElementById('editModal').addEventListener('click', (e) => {
+    if (e.target.id === 'editModal') closeEdit();
+  });
+
+  document.getElementById('restSkip').addEventListener('click', stopTimer);
+  document.getElementById('restAdd15').addEventListener('click', () => {
+    if (state.timer.remaining > 0) {
+      state.timer.remaining += 15;
+      updateTimerDisplay();
+    }
+  });
+}
+
+/* ============== GO ============== */
+init();
