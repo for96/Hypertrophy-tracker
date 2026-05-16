@@ -39,7 +39,7 @@ Poi Network → toggle **Offline** → reload: deve continuare a caricare.
    ```
 2. Su [vercel.com/new](https://vercel.com/new): importa il repo.
 3. Framework Preset: **Vite** (auto-detect).
-4. Deploy. Esce un URL tipo `https://hypertrophy-tracker.vercel.app`.
+4. Deploy. L'URL è `https://hypertrophy-tracker-cyan.vercel.app`.
 
 Ogni push su `main` rideploya automaticamente.
 
