@@ -205,6 +205,14 @@ async function init() {
 
   bindEvents();
   render();
+
+  setTimeout(async () => {
+    if (checkUnclosedSession(state.activeDay)) {
+      setActiveDay(state.activeDay);
+      await persistSessions();
+      render();
+    }
+  }, 100);
 }
 
 function dayForDow(dow) {
@@ -247,6 +255,42 @@ function ensureDaySession(day) {
   }
   state.sessions[day] = session;
   return session;
+}
+
+function checkUnclosedSession(day) {
+  let session = state.sessions[day];
+  if (!session) return false;
+  
+  session = normalizeSession(session, day);
+  
+  const now = new Date();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((now.getDay()+6)%7));
+  monday.setHours(0,0,0,0);
+  
+  if (session.date) {
+    const sessionDate = dateFromKey(session.date);
+    if (sessionDate < monday && hasSessionData(session)) {
+      const formattedDate = fmtDate(session.date);
+      const dayName = (state.program && state.program[day]) ? state.program[day].name : day;
+      
+      if (confirm(`Rilevata sessione non chiusa per "${dayName}" del ${formattedDate}.\n\nVuoi SALVARLA nello storico prima di iniziare il nuovo allenamento?\n\n(Cliccando su OK verrà salvata, su Annulla verrà cancellata)`)) {
+        state.history.push({
+          date: session.date,
+          day: session.day,
+          exerciseNames: exerciseNamesForDay(session.day),
+          sets: JSON.parse(JSON.stringify(session.sets))
+        });
+        storageSet(KEYS.HISTORY, state.history);
+        showToast('Sessione precedente salvata');
+      } else {
+        showToast('Sessione precedente cancellata');
+      }
+      state.sessions[day] = emptySession(day);
+      return true;
+    }
+  }
+  return false;
 }
 
 function setActiveDay(day) {
@@ -304,7 +348,8 @@ function renderTabs() {
 
 function renderDay() {
   const day = state.program[state.activeDay];
-  document.getElementById('dayNum').textContent = day.label;
+  const dateStr = state.session.date ? ` · ${fmtDate(state.session.date)}` : '';
+  document.getElementById('dayNum').textContent = day.label + dateStr;
   document.getElementById('dayTitle').textContent = day.name;
 
   const container = document.getElementById('exercises');
@@ -346,7 +391,7 @@ function exerciseCard(ex, idx) {
       <a class="video-link" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(ex.video)}">
         Guarda su YouTube · ${esc(ex.video)}
       </a>
-      ${last ? `<div class="history-line">Ultima volta (${fmtDate(last.date)}): <b>${last.summary}</b></div>` : ''}
+      ${last ? `<div class="history-line">Ultima volta (${fmtDate(last.date)}): <b>${last.summary}</b> <span class="pr" style="margin-left: 8px;">★ Migliore: ${last.top.w}×${last.top.r}</span></div>` : ''}
       <div class="sets-wrap">
         <div class="sets-header">
           <div>Set</div>
@@ -675,6 +720,7 @@ async function saveEdit() {
   } else {
     const newId = 'u' + Date.now();
     day.exercises.push({ id:newId, ...data });
+    state.session.sets[newId] = initSets(data.sets);
   }
   await saveProgram();
   await persistSessions();
@@ -703,19 +749,28 @@ async function deleteExercise(exId) {
 function startRestTimer(seconds, label, exId) {
   stopTimer();
   state.timer.total = seconds;
-  state.timer.remaining = seconds;
   state.timer.exId = exId;
+  state.timer.endTime = Date.now() + seconds * 1000;
   document.getElementById('restLabel').textContent = label;
   const elTimer = document.getElementById('restTimer');
   elTimer.classList.add('active');
   elTimer.classList.remove('warn','done');
+  
+  const getRemaining = () => Math.max(0, Math.round((state.timer.endTime - Date.now()) / 1000));
+  state.timer.remaining = getRemaining();
   updateTimerDisplay();
+  
   state.timer.intervalId = setInterval(() => {
-    state.timer.remaining--;
-    if (state.timer.remaining <= 10 && state.timer.remaining > 0) {
+    const remaining = getRemaining();
+    state.timer.remaining = remaining;
+    
+    if (remaining <= 10 && remaining > 0) {
       elTimer.classList.add('warn');
+    } else {
+      elTimer.classList.remove('warn');
     }
-    if (state.timer.remaining <= 0) {
+    
+    if (remaining <= 0) {
       elTimer.classList.remove('warn');
       elTimer.classList.add('done');
       document.getElementById('restTime').textContent = 'GO';
@@ -784,6 +839,7 @@ function bindEvents() {
       const nextDay = b.dataset.day;
       if (state.activeDay !== nextDay) {
         state.sessions[state.activeDay] = state.session;
+        checkUnclosedSession(nextDay);
         setActiveDay(nextDay);
         stopTimer();
         await persistSessions();
@@ -815,8 +871,9 @@ function bindEvents() {
 
   document.getElementById('restSkip').addEventListener('click', stopTimer);
   document.getElementById('restAdd15').addEventListener('click', () => {
-    if (state.timer.remaining > 0) {
-      state.timer.remaining += 15;
+    if (state.timer.intervalId && state.timer.endTime) {
+      state.timer.endTime += 15000;
+      state.timer.remaining = Math.max(0, Math.round((state.timer.endTime - Date.now()) / 1000));
       updateTimerDisplay();
     }
   });
