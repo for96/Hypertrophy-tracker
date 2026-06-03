@@ -148,6 +148,7 @@ const DAYS_ORDER = ['lun','mer','ven','extra'];
 let state = {
   program: null,
   session: { day: null, date: null, sets: {} },
+  sessions: {},
   history: [],
   activeDay: 'lun',
   view: 'workout',
@@ -160,6 +161,7 @@ let state = {
 const KEYS = {
   PROGRAM: 'program-v1',
   SESSION: 'session-current',
+  SESSIONS: 'sessions-current-v2',
   HISTORY: 'history',
 };
 
@@ -187,20 +189,75 @@ async function init() {
     if (!state.program[d]) state.program[d] = DEFAULT_PROGRAM[d];
   }
   state.history = await storageGet(KEYS.HISTORY, []);
-  state.session = await storageGet(KEYS.SESSION, { day:null, date:null, sets:{} });
+  const legacySession = await storageGet(KEYS.SESSION, { day:null, date:null, sets:{} });
+  const storedSessions = await storageGet(KEYS.SESSIONS, null);
+  state.sessions = normalizeSessions(storedSessions, legacySession);
 
   const today = new Date();
   const dow = today.getDay();
-  const dowToDay = { 1:'lun', 3:'mer', 5:'ven' };
-  state.activeDay = dowToDay[dow] || (state.session.day || 'lun');
-
-  if (state.session.day !== state.activeDay || !isToday(state.session.date)) {
-    state.session = { day: state.activeDay, date: dateKey(today), sets: {} };
-    await storageSet(KEYS.SESSION, state.session);
-  }
+  const todayDay = dayForDow(dow);
+  const legacyDay = DAYS_ORDER.includes(legacySession.day) ? legacySession.day : null;
+  state.activeDay = (legacyDay && (hasSessionData(legacySession) || isToday(legacySession.date)))
+    ? legacyDay
+    : (todayDay || legacyDay || 'lun');
+  setActiveDay(state.activeDay);
+  await persistSessions();
 
   bindEvents();
   render();
+}
+
+function dayForDow(dow) {
+  const dowToDay = { 1:'lun', 3:'mer', 5:'ven' };
+  return dowToDay[dow] || null;
+}
+
+function normalizeSessions(storedSessions, legacySession) {
+  const sessions = {};
+  if (storedSessions && typeof storedSessions === 'object' && !Array.isArray(storedSessions)) {
+    for (const day of DAYS_ORDER) {
+      if (storedSessions[day]) sessions[day] = normalizeSession(storedSessions[day], day);
+    }
+  }
+  if (legacySession && DAYS_ORDER.includes(legacySession.day)) {
+    const current = sessions[legacySession.day];
+    if (!current || hasSessionData(legacySession) || (!hasSessionData(current) && isToday(legacySession.date))) {
+      sessions[legacySession.day] = normalizeSession(legacySession, legacySession.day);
+    }
+  }
+  return sessions;
+}
+
+function normalizeSession(session, day) {
+  return {
+    day,
+    date: session && session.date ? session.date : dateKey(new Date()),
+    sets: session && session.sets && typeof session.sets === 'object' ? session.sets : {}
+  };
+}
+
+function emptySession(day) {
+  return { day, date: dateKey(new Date()), sets: {} };
+}
+
+function ensureDaySession(day) {
+  let session = normalizeSession(state.sessions[day], day);
+  if (!isToday(session.date) && !hasSessionData(session)) {
+    session = emptySession(day);
+  }
+  state.sessions[day] = session;
+  return session;
+}
+
+function setActiveDay(day) {
+  state.activeDay = day;
+  state.session = ensureDaySession(day);
+}
+
+async function persistSessions() {
+  state.sessions[state.activeDay] = state.session;
+  await storageSet(KEYS.SESSIONS, state.sessions);
+  await storageSet(KEYS.SESSION, state.session);
 }
 
 function isToday(dateStr) {
@@ -225,6 +282,7 @@ function fmtDate(dateStr) {
 
 /* ============== RENDER ============== */
 function render() {
+  document.getElementById('btnViewToggle').textContent = state.view === 'workout' ? 'Storico' : 'Allenamento';
   renderTabs();
   if (state.view === 'workout') {
     document.getElementById('workoutView').classList.remove('hidden');
@@ -394,17 +452,17 @@ function renderStats() {
   document.getElementById('weekNum').textContent = isoWeek(now);
 
   let vol = 0, setsCount = 0;
-  const sessions = [...state.history];
-  if (state.session.day && state.session.sets) {
-    sessions.push({ date: state.session.date, day: state.session.day, sets: state.session.sets });
-  }
+  const sessions = [
+    ...state.history,
+    ...Object.values(state.sessions || {}).filter(s => s && s.day && s.sets)
+  ];
   for (const s of sessions) {
     const d = dateFromKey(s.date);
     if (d >= monday) {
       for (const exId in s.sets) {
         for (const set of s.sets[exId]) {
-          if (set.done && set.w && set.r) {
-            vol += set.w * set.r;
+          if (isCompletedSet(set)) {
+            vol += Number(set.w) * Number(set.r);
             setsCount++;
           }
         }
@@ -427,14 +485,23 @@ function findLastSessionFor(exId) {
   for (let i = state.history.length - 1; i >= 0; i--) {
     const s = state.history[i];
     if (s.sets[exId]) {
-      const done = s.sets[exId].filter(x => x.done && x.w && x.r);
+      const done = s.sets[exId].filter(isCompletedSet);
       if (done.length === 0) continue;
-      const top = done.reduce((a,b) => (a.w*a.r > b.w*b.r ? a : b));
+      const top = done.reduce((a,b) => (Number(a.w)*Number(a.r) > Number(b.w)*Number(b.r) ? a : b));
       const summary = done.map(x => `${x.w}×${x.r}`).join(', ');
       return { date: s.date, summary, top };
     }
   }
   return null;
+}
+
+function exerciseNamesForDay(dayKey) {
+  const day = state.program[dayKey];
+  if (!day) return {};
+  return day.exercises.reduce((names, ex) => {
+    names[ex.id] = ex.name;
+    return names;
+  }, {});
 }
 
 function renderHistory() {
@@ -454,10 +521,10 @@ function renderHistory() {
       <h4>${esc(exNames)}</h4>
       <div class="h-date">${fmtDate(s.date)}</div>
       ${Object.keys(s.sets).map(exId => {
-        const sets = s.sets[exId].filter(x => x.done && x.w && x.r);
+        const sets = s.sets[exId].filter(isCompletedSet);
         if (sets.length === 0) return '';
         const exDef = day && day.exercises.find(e => e.id === exId);
-        const name = exDef ? exDef.name : exId;
+        const name = s.exerciseNames?.[exId] || (exDef ? exDef.name : exId);
         return `<div class="h-ex"><b>${esc(name)}</b><span class="sets">${sets.map(x => x.w+'×'+x.r).join(' · ')}</span></div>`;
       }).join('')}
     `;
@@ -469,14 +536,29 @@ function renderHistory() {
 let saveTimer = null;
 function saveSession() {
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => storageSet(KEYS.SESSION, state.session), 400);
+  state.sessions[state.activeDay] = state.session;
+  saveTimer = setTimeout(() => persistSessions(), 400);
+}
+
+function hasSetEntry(set) {
+  return Boolean(set && (
+    set.done ||
+    (set.w !== null && set.w !== undefined && set.w !== '') ||
+    (set.r !== null && set.r !== undefined && set.r !== '')
+  ));
+}
+
+function hasNumericValue(value) {
+  return value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
+}
+
+function isCompletedSet(set) {
+  return Boolean(set && set.done && hasNumericValue(set.w) && hasNumericValue(set.r));
 }
 
 function hasSessionData(session) {
   return Object.values(session.sets || {}).some(arr =>
-    Array.isArray(arr) && arr.some(set =>
-      set.done || (set.w !== null && set.w !== undefined) || (set.r !== null && set.r !== undefined)
-    )
+    Array.isArray(arr) && arr.some(hasSetEntry)
   );
 }
 
@@ -486,12 +568,14 @@ async function saveProgram() {
 
 async function finishDay() {
   const hasData = Object.values(state.session.sets).some(arr =>
-    arr.some(s => s.done && s.w && s.r)
+    arr.some(isCompletedSet)
   );
   if (!hasData) {
     if (!confirm('Nessuna serie completata. Chiudere comunque senza salvare nello storico?')) return;
-    state.session = { day: state.activeDay, date: dateKey(new Date()), sets: {} };
-    await storageSet(KEYS.SESSION, state.session);
+    state.session = emptySession(state.activeDay);
+    state.sessions[state.activeDay] = state.session;
+    await persistSessions();
+    stopTimer();
     render();
     return;
   }
@@ -499,19 +583,24 @@ async function finishDay() {
   state.history.push({
     date: state.session.date,
     day: state.session.day,
+    exerciseNames: exerciseNamesForDay(state.session.day),
     sets: JSON.parse(JSON.stringify(state.session.sets))
   });
   await storageSet(KEYS.HISTORY, state.history);
-  state.session = { day: state.activeDay, date: dateKey(new Date()), sets: {} };
-  await storageSet(KEYS.SESSION, state.session);
+  state.session = emptySession(state.activeDay);
+  state.sessions[state.activeDay] = state.session;
+  await persistSessions();
+  stopTimer();
   showToast('Sessione salvata');
   render();
 }
 
 async function resetDay() {
   if (!confirm('Cancellare i dati di oggi (non ancora salvati nello storico)?')) return;
-  state.session.sets = {};
-  await storageSet(KEYS.SESSION, state.session);
+  state.session = emptySession(state.activeDay);
+  state.sessions[state.activeDay] = state.session;
+  await persistSessions();
+  stopTimer();
   render();
 }
 
@@ -561,6 +650,8 @@ function closeEdit() {
 
 async function saveEdit() {
   const day = state.program[state.activeDay];
+  const editingId = state.editingExerciseId;
+  const wasEditing = Boolean(editingId);
   const data = {
     name: document.getElementById('ed-name').value.trim() || 'Esercizio',
     target: document.getElementById('ed-target').value.trim(),
@@ -570,23 +661,26 @@ async function saveEdit() {
     cue: document.getElementById('ed-cue').value.trim(),
     video: document.getElementById('ed-video').value.trim() || (document.getElementById('ed-name').value + ' tutorial')
   };
-  if (state.editingExerciseId) {
-    const ex = day.exercises.find(e => e.id === state.editingExerciseId);
-    Object.assign(ex, data);
+  if (wasEditing) {
+    const ex = day.exercises.find(e => e.id === editingId);
+    if (!ex) return;
     const sess = state.session.sets[ex.id];
     if (sess) {
+      const removedSets = sess.slice(data.sets);
+      if (removedSets.some(hasSetEntry) && !confirm('Ridurre il numero di serie eliminera dati compilati. Continuare?')) return;
       while (sess.length < data.sets) sess.push({ w:null, r:null, done:false });
       while (sess.length > data.sets) sess.pop();
     }
+    Object.assign(ex, data);
   } else {
     const newId = 'u' + Date.now();
     day.exercises.push({ id:newId, ...data });
   }
   await saveProgram();
-  await storageSet(KEYS.SESSION, state.session);
+  await persistSessions();
   closeEdit();
   render();
-  showToast(state.editingExerciseId ? 'Esercizio aggiornato' : 'Esercizio aggiunto');
+  showToast(wasEditing ? 'Esercizio aggiornato' : 'Esercizio aggiunto');
 }
 
 async function deleteExercise(exId) {
@@ -597,8 +691,9 @@ async function deleteExercise(exId) {
   day.exercises = day.exercises.filter(e => e.id !== exId);
   delete state.session.sets[exId];
   state.expanded.delete(exId);
+  if (state.timer.exId === exId) stopTimer();
   await saveProgram();
-  await storageSet(KEYS.SESSION, state.session);
+  await persistSessions();
   closeEdit();
   render();
   showToast('Esercizio eliminato');
@@ -687,12 +782,12 @@ function bindEvents() {
   document.querySelectorAll('nav.days button').forEach(b => {
     b.addEventListener('click', async () => {
       const nextDay = b.dataset.day;
-      if (state.session.day !== nextDay) {
-        if (hasSessionData(state.session) && !confirm('Cambiare giorno scartera i dati della sessione in corso. Continuare?')) return;
-        state.session = { day: nextDay, date: dateKey(new Date()), sets: {} };
-        await storageSet(KEYS.SESSION, state.session);
+      if (state.activeDay !== nextDay) {
+        state.sessions[state.activeDay] = state.session;
+        setActiveDay(nextDay);
+        stopTimer();
+        await persistSessions();
       }
-      state.activeDay = nextDay;
       state.view = 'workout';
       render();
     });
