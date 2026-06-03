@@ -208,11 +208,18 @@ function isToday(dateStr) {
   return dateStr === dateKey(new Date());
 }
 function dateKey(d) {
-  return d.toISOString().slice(0,10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+function dateFromKey(dateStr) {
+  const [y, m, d] = String(dateStr).split('-').map(Number);
+  return new Date(y, m - 1, d);
 }
 function fmtDate(dateStr) {
   if (!dateStr) return '—';
-  const d = new Date(dateStr);
+  const d = dateFromKey(dateStr);
   return d.toLocaleDateString('it-IT', { weekday:'short', day:'2-digit', month:'short' });
 }
 
@@ -392,7 +399,7 @@ function renderStats() {
     sessions.push({ date: state.session.date, day: state.session.day, sets: state.session.sets });
   }
   for (const s of sessions) {
-    const d = new Date(s.date + 'T00:00:00');
+    const d = dateFromKey(s.date);
     if (d >= monday) {
       for (const exId in s.sets) {
         for (const set of s.sets[exId]) {
@@ -463,6 +470,14 @@ let saveTimer = null;
 function saveSession() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => storageSet(KEYS.SESSION, state.session), 400);
+}
+
+function hasSessionData(session) {
+  return Object.values(session.sets || {}).some(arr =>
+    Array.isArray(arr) && arr.some(set =>
+      set.done || (set.w !== null && set.w !== undefined) || (set.r !== null && set.r !== undefined)
+    )
+  );
 }
 
 async function saveProgram() {
@@ -671,11 +686,13 @@ function showUpdateBanner(onAccept) {
 function bindEvents() {
   document.querySelectorAll('nav.days button').forEach(b => {
     b.addEventListener('click', async () => {
-      state.activeDay = b.dataset.day;
-      if (state.session.day !== state.activeDay) {
-        state.session = { day: state.activeDay, date: dateKey(new Date()), sets: {} };
+      const nextDay = b.dataset.day;
+      if (state.session.day !== nextDay) {
+        if (hasSessionData(state.session) && !confirm('Cambiare giorno scartera i dati della sessione in corso. Continuare?')) return;
+        state.session = { day: nextDay, date: dateKey(new Date()), sets: {} };
         await storageSet(KEYS.SESSION, state.session);
       }
+      state.activeDay = nextDay;
       state.view = 'workout';
       render();
     });
