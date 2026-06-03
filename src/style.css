@@ -52,13 +52,6 @@ header {
   text-transform: uppercase;
 }
 .brand h1 .slash { color: var(--accent); }
-.brand .tag {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-}
 .meta-bar {
   display: flex;
   justify-content: space-between;
