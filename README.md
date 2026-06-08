@@ -1,6 +1,6 @@
 # Hypertrophy Tracker · PWA
 
-Tracker per il protocollo di ipertrofia 3+1: 3 allenamenti settimanali (Lun/Mer/Ven) + un richiamo opzionale. Vanilla JS + Vite + vite-plugin-pwa, deployabile su Vercel, installabile su iPhone come app standalone.
+Tracker per il protocollo di ipertrofia: 3 allenamenti settimanali (Lun/Mer/Ven) + una sessione libera componibile con gli esercizi salvati. Vanilla JS + Vite + vite-plugin-pwa, deployabile su Vercel, installabile su iPhone come app standalone.
 
 ## Sviluppo locale
 

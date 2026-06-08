@@ -94,6 +94,10 @@ nav.days button .day-letter {
   font-size: 18px;
   line-height: 1;
 }
+nav.days button[data-day="free"] .day-letter {
+  font-size: 14px;
+  letter-spacing: 0.03em;
+}
 nav.days button .day-mini {
   font-family: 'JetBrains Mono', monospace;
   font-size: 8px;
@@ -399,6 +403,31 @@ nav.days button:not(.active):hover {
   color: var(--accent);
 }
 
+/* FREE SESSION */
+.free-empty {
+  background: var(--bg-elev);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  padding: 28px 20px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.free-empty strong {
+  display: block;
+  font-family: 'Anton', sans-serif;
+  font-size: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 6px;
+}
+.free-empty span {
+  display: block;
+  max-width: 480px;
+  margin: 0 auto;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
 /* REST TIMER (floating) */
 .rest-timer {
   position: fixed;
@@ -548,6 +577,78 @@ nav.days button:not(.active):hover {
 .btn.primary:hover { background: #d4ff33; border-color: #d4ff33; color: #000; }
 .btn.danger { border-color: var(--danger); color: var(--danger); }
 .btn.danger:hover { background: var(--danger); color: #fff; }
+
+/* EXERCISE LIBRARY */
+.modal-intro {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin: -8px 0 18px;
+}
+.library-modal { max-width: 620px; }
+.library-list {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  max-height: min(46vh, 420px);
+  overflow-y: auto;
+}
+.library-empty {
+  color: var(--text-dim);
+  padding: 24px 16px;
+  text-align: center;
+  font-style: italic;
+}
+.library-item {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 12px;
+  cursor: pointer;
+  border-top: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.library-item:first-child { border-top: 0; }
+.library-item:hover { background: rgba(255,255,255,0.025); }
+.library-item.selected { background: rgba(200,255,0,0.06); }
+.library-item.disabled {
+  cursor: default;
+  opacity: 0.48;
+}
+.library-item input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+.library-name {
+  display: block;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  line-height: 1.25;
+}
+.library-target {
+  display: block;
+  color: var(--text-dim);
+  font-size: 11px;
+  margin-top: 2px;
+}
+.library-source,
+.library-added {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-dimmer);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: right;
+}
+.library-added { color: var(--accent-dim); }
+.library-actions { justify-content: flex-end; }
+.library-actions .btn.primary:disabled {
+  background: var(--border-strong);
+  border-color: var(--border-strong);
+  color: var(--text-dim);
+  cursor: default;
+}
 
 /* TOAST */
 .toast {
