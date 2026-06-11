@@ -159,13 +159,17 @@ const LIBRARY_DAY_LABELS = {
 /* ============== STATE ============== */
 let state = {
   program: null,
+  exerciseLibrary: [],
   session: { day: null, date: null, sets: {} },
   sessions: {},
   history: [],
   activeDay: 'lun',
+  programDay: 'lun',
   view: 'workout',
   expanded: new Set(),
   editingExerciseId: null,
+  editingProgramDay: null,
+  libraryMode: 'session',
   librarySelection: new Set(),
   timer: { remaining: 0, total: 0, intervalId: null, exId: null }
 };
@@ -173,6 +177,7 @@ let state = {
 /* ============== STORAGE LAYER (localStorage) ============== */
 const KEYS = {
   PROGRAM: 'program-v1',
+  LIBRARY: 'exercise-library-v1',
   SESSION: 'session-current',
   SESSIONS: 'sessions-current-v2',
   HISTORY: 'history',
@@ -201,6 +206,11 @@ async function init() {
   for (const d of [...LIBRARY_DAYS, 'free']) {
     if (!state.program[d]) state.program[d] = DEFAULT_PROGRAM[d];
   }
+  state.exerciseLibrary = normalizeExerciseLibrary(
+    await storageGet(KEYS.LIBRARY, null),
+    state.program
+  );
+  await storageSet(KEYS.LIBRARY, state.exerciseLibrary);
   state.history = await storageGet(KEYS.HISTORY, []);
   const storedLegacySession = await storageGet(KEYS.SESSION, { day:null, date:null, sets:{} });
   const legacySession = migrateLegacyFreeSession(storedLegacySession);
@@ -257,20 +267,21 @@ function normalizeSession(session, day) {
   const normalized = {
     day,
     date: session && session.date ? session.date : dateKey(new Date()),
-    sets: session && session.sets && typeof session.sets === 'object' ? session.sets : {}
-  };
-  if (day === 'free') {
-    normalized.exercises = Array.isArray(session?.exercises)
+    sets: session && session.sets && typeof session.sets === 'object' ? session.sets : {},
+    exercises: Array.isArray(session?.exercises)
       ? session.exercises.map(cloneExercise)
-      : [];
-  }
+      : initialExercisesForDay(day)
+  };
   return normalized;
 }
 
 function emptySession(day) {
-  const session = { day, date: dateKey(new Date()), sets: {} };
-  if (day === 'free') session.exercises = [];
-  return session;
+  return {
+    day,
+    date: dateKey(new Date()),
+    sets: {},
+    exercises: initialExercisesForDay(day)
+  };
 }
 
 function migrateLegacyFreeSession(session) {
@@ -299,6 +310,28 @@ function cloneExercise(ex) {
     video: ex.video || `${ex.name} tutorial`,
     ...(ex.sourceDay ? { sourceDay: ex.sourceDay } : {})
   };
+}
+
+function initialExercisesForDay(day) {
+  if (day === 'free') return [];
+  return (state.program?.[day]?.exercises || []).map(cloneExercise);
+}
+
+function normalizeExerciseLibrary(storedLibrary, program) {
+  const byId = new Map();
+  if (Array.isArray(storedLibrary)) {
+    for (const ex of storedLibrary) {
+      if (ex?.id) byId.set(ex.id, cloneExercise(ex));
+    }
+  }
+  for (const dayKey of LIBRARY_DAYS) {
+    for (const ex of program?.[dayKey]?.exercises || []) {
+      if (!byId.has(ex.id)) {
+        byId.set(ex.id, { ...cloneExercise(ex), sourceDay: dayKey });
+      }
+    }
+  }
+  return [...byId.values()];
 }
 
 function ensureDaySession(day) {
@@ -379,16 +412,20 @@ function fmtDate(dateStr) {
 
 /* ============== RENDER ============== */
 function render() {
-  document.getElementById('btnViewToggle').textContent = state.view === 'workout' ? 'Storico' : 'Allenamento';
+  document.getElementById('btnProgramView').classList.toggle('active', state.view === 'program');
+  document.getElementById('btnHistoryView').classList.toggle('active', state.view === 'history');
   renderTabs();
+  document.getElementById('workoutView').classList.toggle('hidden', state.view !== 'workout');
+  document.getElementById('historyView').classList.toggle('hidden', state.view !== 'history');
+  document.getElementById('programView').classList.toggle('hidden', state.view !== 'program');
+  document.getElementById('workoutDays').classList.toggle('hidden', state.view !== 'workout');
+
   if (state.view === 'workout') {
-    document.getElementById('workoutView').classList.remove('hidden');
-    document.getElementById('historyView').classList.add('hidden');
     renderDay();
-  } else {
-    document.getElementById('workoutView').classList.add('hidden');
-    document.getElementById('historyView').classList.remove('hidden');
+  } else if (state.view === 'history') {
     renderHistory();
+  } else {
+    renderProgram();
   }
   renderStats();
 }
@@ -422,16 +459,60 @@ function renderDay() {
     container.appendChild(exerciseCard(ex, idx));
   });
 
-  document.getElementById('btnAddExercise').textContent =
-    state.activeDay === 'free' ? '+ Scegli esercizi salvati' : '+ Aggiungi esercizio';
+  document.getElementById('btnAddExercise').textContent = '+ Scegli esercizi salvati';
 }
 
 function exercisesForActiveSession() {
-  if (state.activeDay === 'free') {
-    if (!Array.isArray(state.session.exercises)) state.session.exercises = [];
-    return state.session.exercises;
+  if (!Array.isArray(state.session.exercises)) {
+    state.session.exercises = initialExercisesForDay(state.activeDay);
   }
-  return state.program[state.activeDay].exercises;
+  return state.session.exercises;
+}
+
+function renderProgram() {
+  const day = state.program[state.programDay];
+  document.querySelectorAll('[data-program-day]').forEach(button => {
+    button.classList.toggle('active', button.dataset.programDay === state.programDay);
+  });
+  document.getElementById('programDayLabel').textContent = day.label;
+  document.getElementById('programDayTitle').textContent = day.name;
+  document.getElementById('programExerciseCount').textContent =
+    `${day.exercises.length} ${day.exercises.length === 1 ? 'esercizio' : 'esercizi'}`;
+
+  const container = document.getElementById('programExercises');
+  if (day.exercises.length === 0) {
+    container.innerHTML = `
+      <div class="free-empty">
+        <strong>Nessun esercizio iniziale</strong>
+        <span>Aggiungi esercizi salvati o creane uno nuovo per costruire questa giornata.</span>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = day.exercises.map((ex, idx) => `
+    <div class="program-exercise" data-id="${esc(ex.id)}">
+      <span class="ex-num">${String(idx + 1).padStart(2, '0')}</span>
+      <div class="program-exercise-main">
+        <strong>${esc(ex.name)}</strong>
+        <span>${ex.sets}x${esc(ex.reps)} · rec ${ex.rest}s · ${esc(ex.target)}</span>
+      </div>
+      <div class="program-exercise-actions">
+        <button class="mini-btn" data-program-action="up" ${idx === 0 ? 'disabled' : ''}>Su</button>
+        <button class="mini-btn" data-program-action="down" ${idx === day.exercises.length - 1 ? 'disabled' : ''}>Giù</button>
+        <button class="mini-btn" data-program-action="edit">Modifica</button>
+        <button class="mini-btn danger" data-program-action="remove">Togli</button>
+      </div>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.program-exercise').forEach(card => {
+    const exId = card.dataset.id;
+    card.querySelector('[data-program-action="up"]').addEventListener('click', () => moveTemplateExercise(exId, -1));
+    card.querySelector('[data-program-action="down"]').addEventListener('click', () => moveTemplateExercise(exId, 1));
+    card.querySelector('[data-program-action="edit"]').addEventListener('click', () => openEdit(exId, state.programDay));
+    card.querySelector('[data-program-action="remove"]').addEventListener('click', () => removeExerciseFromTemplate(exId));
+  });
 }
 
 function exerciseCard(ex, idx) {
@@ -491,9 +572,7 @@ function exerciseCard(ex, idx) {
           <button class="mini-btn" data-action="reset">Reset</button>
         </div>
         <div class="right">
-          ${state.activeDay === 'free'
-            ? '<button class="mini-btn danger" data-action="remove">Rimuovi</button>'
-            : '<button class="mini-btn" data-action="edit">Modifica</button><button class="mini-btn danger" data-action="delete">Elimina</button>'}
+          <button class="mini-btn danger" data-action="remove">Rimuovi</button>
         </div>
       </div>
     </div>
@@ -543,12 +622,8 @@ function exerciseCard(ex, idx) {
       render();
     }
   });
-  const editButton = card.querySelector('[data-action="edit"]');
-  const deleteButton = card.querySelector('[data-action="delete"]');
   const removeButton = card.querySelector('[data-action="remove"]');
-  if (editButton) editButton.addEventListener('click', () => openEdit(ex.id));
-  if (deleteButton) deleteButton.addEventListener('click', () => deleteExercise(ex.id));
-  if (removeButton) removeButton.addEventListener('click', () => removeExerciseFromFreeSession(ex.id));
+  if (removeButton) removeButton.addEventListener('click', () => removeExerciseFromSession(ex.id));
 
   return card;
 }
@@ -620,10 +695,7 @@ function findLastSessionFor(exId) {
 }
 
 function exerciseNamesForSession(session) {
-  const exercises = session.day === 'free'
-    ? (session.exercises || [])
-    : (state.program[session.day]?.exercises || []);
-  return exercises.reduce((names, ex) => {
+  return (session.exercises || []).reduce((names, ex) => {
     names[ex.id] = ex.name;
     return names;
   }, {});
@@ -691,6 +763,10 @@ async function saveProgram() {
   await storageSet(KEYS.PROGRAM, state.program);
 }
 
+async function saveExerciseLibrary() {
+  await storageSet(KEYS.LIBRARY, state.exerciseLibrary);
+}
+
 async function finishDay() {
   const hasData = Object.values(state.session.sets).some(arr =>
     arr.some(isCompletedSet)
@@ -721,12 +797,13 @@ async function finishDay() {
 }
 
 async function resetDay() {
-  if (!confirm('Cancellare i dati di oggi (non ancora salvati nello storico)?')) return;
+  if (!confirm('Cancellare i dati di oggi e ripristinare lo stato iniziale della sessione?')) return;
   state.session = emptySession(state.activeDay);
   state.sessions[state.activeDay] = state.session;
   await persistSessions();
   stopTimer();
   render();
+  showToast(state.activeDay === 'free' ? 'Sessione svuotata' : 'Stato iniziale ripristinato');
 }
 
 async function clearHistory() {
@@ -736,24 +813,21 @@ async function clearHistory() {
   render();
 }
 
-/* ============== FREE SESSION LIBRARY ============== */
+/* ============== EXERCISE LIBRARY ============== */
 function savedExerciseLibrary() {
-  const seen = new Set();
-  const library = [];
-  for (const dayKey of LIBRARY_DAYS) {
-    const exercises = state.program[dayKey]?.exercises || [];
-    for (const ex of exercises) {
-      if (seen.has(ex.id)) continue;
-      seen.add(ex.id);
-      library.push({ ...cloneExercise(ex), sourceDay: dayKey });
-    }
-  }
-  return library;
+  return state.exerciseLibrary.map(cloneExercise);
 }
 
-function openExerciseLibrary() {
+function openExerciseLibrary(mode = 'session') {
+  state.libraryMode = mode;
   state.librarySelection.clear();
   document.getElementById('librarySearch').value = '';
+  document.getElementById('libraryTitle').textContent =
+    mode === 'program' ? 'Aggiungi allo stato iniziale' : 'Aggiungi alla sessione';
+  document.getElementById('libraryIntro').textContent =
+    mode === 'program'
+      ? 'Gli esercizi scelti saranno presenti all’inizio di ogni nuova sessione di questa giornata.'
+      : 'Gli esercizi scelti valgono solo per l’allenamento corrente.';
   document.getElementById('libraryModal').classList.add('active');
   renderExerciseLibrary();
   document.getElementById('librarySearch').focus();
@@ -767,7 +841,10 @@ function closeExerciseLibrary() {
 function renderExerciseLibrary() {
   const container = document.getElementById('libraryList');
   const query = document.getElementById('librarySearch').value.trim().toLocaleLowerCase('it');
-  const existingIds = new Set((state.session.exercises || []).map(ex => ex.id));
+  const targetExercises = state.libraryMode === 'program'
+    ? state.program[state.programDay].exercises
+    : state.session.exercises;
+  const existingIds = new Set((targetExercises || []).map(ex => ex.id));
   const library = savedExerciseLibrary().filter(ex => {
     if (!query) return true;
     return `${ex.name} ${ex.target} ${LIBRARY_DAY_LABELS[ex.sourceDay] || ''}`
@@ -789,7 +866,7 @@ function renderExerciseLibrary() {
             <span class="library-target">${esc(ex.target)}</span>
           </span>
           <span class="${alreadyAdded ? 'library-added' : 'library-source'}">
-            ${alreadyAdded ? 'Aggiunto' : esc(LIBRARY_DAY_LABELS[ex.sourceDay] || ex.sourceDay)}
+            ${alreadyAdded ? 'Aggiunto' : 'Salvato'}
           </span>
         </label>
       `;
@@ -815,25 +892,35 @@ function updateLibraryCount() {
 
 async function addSelectedExercises() {
   if (state.librarySelection.size === 0) return;
-  const existingIds = new Set((state.session.exercises || []).map(ex => ex.id));
+  const targetExercises = state.libraryMode === 'program'
+    ? state.program[state.programDay].exercises
+    : state.session.exercises;
+  const existingIds = new Set((targetExercises || []).map(ex => ex.id));
   const chosen = savedExerciseLibrary()
     .filter(ex => state.librarySelection.has(ex.id) && !existingIds.has(ex.id))
     .map(cloneExercise);
 
-  state.session.exercises.push(...chosen);
-  for (const ex of chosen) {
-    state.session.sets[ex.id] = initSets(ex.sets);
+  if (state.libraryMode === 'program') {
+    state.program[state.programDay].exercises.push(...chosen);
+    await saveProgram();
+  } else {
+    state.session.exercises.push(...chosen);
+    for (const ex of chosen) {
+      state.session.sets[ex.id] = initSets(ex.sets);
+    }
+    await persistSessions();
   }
-  await persistSessions();
   closeExerciseLibrary();
   render();
   showToast(chosen.length === 1 ? 'Esercizio aggiunto' : `${chosen.length} esercizi aggiunti`);
 }
 
-async function removeExerciseFromFreeSession(exId) {
+async function removeExerciseFromSession(exId) {
   const ex = state.session.exercises?.find(item => item.id === exId);
   if (!ex) return;
-  if (!confirm(`Rimuovere "${ex.name}" da questa sessione?`)) return;
+  const hasEnteredData = (state.session.sets[exId] || []).some(hasSetEntry);
+  if (hasEnteredData && !confirm(`Rimuovere "${ex.name}" e i dati inseriti da questa sessione?`)) return;
+  if (!hasEnteredData && !confirm(`Rimuovere "${ex.name}" da questa sessione?`)) return;
   state.session.exercises = state.session.exercises.filter(item => item.id !== exId);
   delete state.session.sets[exId];
   state.expanded.delete(exId);
@@ -843,11 +930,33 @@ async function removeExerciseFromFreeSession(exId) {
   showToast('Esercizio rimosso');
 }
 
+async function removeExerciseFromTemplate(exId) {
+  const day = state.program[state.programDay];
+  const ex = day.exercises.find(item => item.id === exId);
+  if (!ex) return;
+  if (!confirm(`Togliere "${ex.name}" dallo stato iniziale di questa giornata? L’esercizio resterà tra i salvati.`)) return;
+  day.exercises = day.exercises.filter(item => item.id !== exId);
+  await saveProgram();
+  render();
+  showToast('Stato iniziale aggiornato');
+}
+
+async function moveTemplateExercise(exId, offset) {
+  const exercises = state.program[state.programDay].exercises;
+  const index = exercises.findIndex(ex => ex.id === exId);
+  const nextIndex = index + offset;
+  if (index < 0 || nextIndex < 0 || nextIndex >= exercises.length) return;
+  [exercises[index], exercises[nextIndex]] = [exercises[nextIndex], exercises[index]];
+  await saveProgram();
+  renderProgram();
+}
+
 /* ============== EDIT MODAL ============== */
-function openEdit(exId) {
+function openEdit(exId, programDay = state.programDay) {
   state.editingExerciseId = exId;
-  const day = state.program[state.activeDay];
-  const ex = day.exercises.find(e => e.id === exId);
+  state.editingProgramDay = programDay;
+  const ex = state.exerciseLibrary.find(e => e.id === exId)
+    || state.program[programDay].exercises.find(e => e.id === exId);
   if (!ex) return;
   document.getElementById('editTitle').textContent = 'Modifica · ' + ex.name;
   document.getElementById('ed-name').value = ex.name;
@@ -861,8 +970,9 @@ function openEdit(exId) {
   document.getElementById('editModal').classList.add('active');
 }
 
-function openAdd() {
+function openAdd(programDay = state.programDay) {
   state.editingExerciseId = null;
+  state.editingProgramDay = programDay;
   document.getElementById('editTitle').textContent = 'Nuovo esercizio';
   document.getElementById('ed-name').value = '';
   document.getElementById('ed-target').value = '';
@@ -878,10 +988,12 @@ function openAdd() {
 function closeEdit() {
   document.getElementById('editModal').classList.remove('active');
   state.editingExerciseId = null;
+  state.editingProgramDay = null;
 }
 
 async function saveEdit() {
-  const day = state.program[state.activeDay];
+  const dayKey = state.editingProgramDay || state.programDay;
+  const day = state.program[dayKey];
   const editingId = state.editingExerciseId;
   const wasEditing = Boolean(editingId);
   const data = {
@@ -894,42 +1006,42 @@ async function saveEdit() {
     video: document.getElementById('ed-video').value.trim() || (document.getElementById('ed-name').value + ' tutorial')
   };
   if (wasEditing) {
-    const ex = day.exercises.find(e => e.id === editingId);
+    const ex = state.exerciseLibrary.find(e => e.id === editingId);
     if (!ex) return;
-    const sess = state.session.sets[ex.id];
-    if (sess) {
-      const removedSets = sess.slice(data.sets);
-      if (removedSets.some(hasSetEntry) && !confirm('Ridurre il numero di serie eliminera dati compilati. Continuare?')) return;
-      while (sess.length < data.sets) sess.push({ w:null, r:null, done:false });
-      while (sess.length > data.sets) sess.pop();
-    }
     Object.assign(ex, data);
+    for (const programDay of LIBRARY_DAYS) {
+      const templateExercise = state.program[programDay]?.exercises.find(item => item.id === editingId);
+      if (templateExercise) Object.assign(templateExercise, data);
+    }
   } else {
     const newId = 'u' + Date.now();
-    day.exercises.push({ id:newId, ...data });
-    state.session.sets[newId] = initSets(data.sets);
+    const newExercise = { id:newId, ...data, sourceDay: dayKey };
+    state.exerciseLibrary.push(cloneExercise(newExercise));
+    day.exercises.push(cloneExercise(newExercise));
   }
+  await saveExerciseLibrary();
   await saveProgram();
-  await persistSessions();
   closeEdit();
   render();
-  showToast(wasEditing ? 'Esercizio aggiornato' : 'Esercizio aggiunto');
+  showToast(wasEditing ? 'Esercizio salvato' : 'Esercizio creato');
 }
 
 async function deleteExercise(exId) {
-  const day = state.program[state.activeDay];
-  const ex = day.exercises.find(e => e.id === exId);
+  const ex = state.exerciseLibrary.find(e => e.id === exId);
   if (!ex) return;
-  if (!confirm('Eliminare definitivamente "' + ex.name + '" dal programma?')) return;
-  day.exercises = day.exercises.filter(e => e.id !== exId);
-  delete state.session.sets[exId];
+  if (!confirm(`Eliminare definitivamente "${ex.name}" dagli esercizi salvati e da tutti gli stati iniziali?`)) return;
+  state.exerciseLibrary = state.exerciseLibrary.filter(item => item.id !== exId);
+  for (const dayKey of LIBRARY_DAYS) {
+    if (state.program[dayKey]) {
+      state.program[dayKey].exercises = state.program[dayKey].exercises.filter(item => item.id !== exId);
+    }
+  }
   state.expanded.delete(exId);
-  if (state.timer.exId === exId) stopTimer();
+  await saveExerciseLibrary();
   await saveProgram();
-  await persistSessions();
   closeEdit();
   render();
-  showToast('Esercizio eliminato');
+  showToast('Esercizio salvato eliminato');
 }
 
 /* ============== REST TIMER ============== */
@@ -1036,17 +1148,29 @@ function bindEvents() {
     });
   });
 
-  document.getElementById('btnViewToggle').addEventListener('click', () => {
-    state.view = (state.view === 'workout') ? 'history' : 'workout';
-    document.getElementById('btnViewToggle').textContent = state.view === 'workout' ? 'Storico' : 'Allenamento';
+  document.getElementById('btnProgramView').addEventListener('click', () => {
+    state.view = state.view === 'program' ? 'workout' : 'program';
+    render();
+  });
+  document.getElementById('btnHistoryView').addEventListener('click', () => {
+    state.view = state.view === 'history' ? 'workout' : 'history';
+    render();
+  });
+  document.getElementById('btnBackToWorkout').addEventListener('click', () => {
+    state.view = 'workout';
     render();
   });
 
   document.getElementById('btnResetDay').addEventListener('click', resetDay);
   document.getElementById('btnFinishDay').addEventListener('click', finishDay);
-  document.getElementById('btnAddExercise').addEventListener('click', () => {
-    if (state.activeDay === 'free') openExerciseLibrary();
-    else openAdd();
+  document.getElementById('btnAddExercise').addEventListener('click', () => openExerciseLibrary('session'));
+  document.getElementById('btnProgramAddSaved').addEventListener('click', () => openExerciseLibrary('program'));
+  document.getElementById('btnProgramNewExercise').addEventListener('click', () => openAdd(state.programDay));
+  document.querySelectorAll('[data-program-day]').forEach(button => {
+    button.addEventListener('click', () => {
+      state.programDay = button.dataset.programDay;
+      renderProgram();
+    });
   });
   document.getElementById('btnClearHistory').addEventListener('click', clearHistory);
 

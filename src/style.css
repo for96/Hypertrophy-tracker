@@ -65,6 +65,7 @@ header {
 }
 .meta-bar .stats { display: flex; gap: 18px; flex-wrap: wrap; }
 .meta-bar .stats span b { color: var(--accent); font-weight: 700; }
+.header-actions { display: flex; gap: 6px; }
 
 /* NAV TABS */
 nav.days {
@@ -159,6 +160,105 @@ nav.days button:not(.active):hover {
 .icon-btn:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+.icon-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(200,255,0,0.06);
+}
+
+.section-intro {
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: -4px 0 16px;
+  max-width: 680px;
+}
+
+/* PROGRAM CONFIGURATION */
+.program-days {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.program-days button {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: var(--radius);
+  padding: 10px;
+  font-family: 'Anton', sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.program-days button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+.program-summary {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.program-kicker,
+.program-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.program-summary h3 {
+  font-family: 'Anton', sans-serif;
+  font-size: 20px;
+  text-transform: uppercase;
+  margin: 2px 0 0;
+  line-height: 1.1;
+}
+.program-exercise {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.program-exercise-main { min-width: 0; }
+.program-exercise-main strong {
+  display: block;
+  font-size: 13px;
+  text-transform: uppercase;
+  line-height: 1.25;
+}
+.program-exercise-main span {
+  display: block;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  margin-top: 3px;
+}
+.program-exercise-actions {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.mini-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+.program-add-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
 /* EXERCISE CARDS */
@@ -763,6 +863,18 @@ nav.days button:not(.active):hover {
 /* Mobile tweaks */
 @media (max-width: 520px) {
   body { font-size: 14px; }
+  .meta-bar { align-items: flex-end; gap: 10px; }
+  .header-actions { flex-direction: column; }
+  .header-actions .icon-btn { padding: 5px 8px; }
+  .program-exercise {
+    grid-template-columns: 24px 1fr;
+    align-items: start;
+  }
+  .program-exercise-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+  .program-add-actions { grid-template-columns: 1fr; }
   .sets-header, .set-row {
     grid-template-columns: 28px 1fr 1fr 50px 32px;
     gap: 4px;

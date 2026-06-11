@@ -37,11 +37,14 @@
         <span>Volume tot: <b id="weekVol">—</b> kg</span>
         <span>Serie compl.: <b id="weekSets">—</b></span>
       </div>
-      <button class="icon-btn" id="btnViewToggle">Storico</button>
+      <div class="header-actions">
+        <button class="icon-btn" id="btnProgramView">Scheda</button>
+        <button class="icon-btn" id="btnHistoryView">Storico</button>
+      </div>
     </div>
   </header>
 
-  <nav class="days">
+  <nav class="days" id="workoutDays">
     <button data-day="lun"><span class="day-letter">LUN</span><span class="day-mini">DORSO·TRI</span></button>
     <button data-day="mer"><span class="day-letter">MER</span><span class="day-mini">GAMBE·SPALLE</span></button>
     <button data-day="ven"><span class="day-letter">VEN</span><span class="day-mini">PETTO·BIC</span></button>
@@ -74,6 +77,34 @@
       </div>
       <div id="historyList"></div>
     </section>
+
+    <section id="programView" class="hidden">
+      <div class="day-header">
+        <div>
+          <div class="day-num">Configurazione</div>
+          <h2>Stato iniziale</h2>
+        </div>
+        <button class="icon-btn" id="btnBackToWorkout">Allenamento</button>
+      </div>
+      <p class="section-intro">Questa è la scheda di partenza. Le modifiche fatte durante un allenamento restano temporanee; ogni nuova sessione riparte da qui.</p>
+      <div class="program-days" id="programDays">
+        <button data-program-day="lun">LUN</button>
+        <button data-program-day="mer">MER</button>
+        <button data-program-day="ven">VEN</button>
+      </div>
+      <div class="program-summary">
+        <div>
+          <span class="program-kicker" id="programDayLabel">Giorno 1 · Lunedì</span>
+          <h3 id="programDayTitle">Dorso & Tricipiti + Avambracci</h3>
+        </div>
+        <span class="program-count" id="programExerciseCount">0 esercizi</span>
+      </div>
+      <div id="programExercises"></div>
+      <div class="program-add-actions">
+        <button class="add-exercise" id="btnProgramAddSaved">+ Aggiungi salvati</button>
+        <button class="add-exercise" id="btnProgramNewExercise">+ Nuovo esercizio</button>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -92,8 +123,8 @@
 <!-- EXERCISE LIBRARY MODAL -->
 <div class="modal-backdrop" id="libraryModal">
   <div class="modal library-modal">
-    <h3>Aggiungi esercizi salvati</h3>
-    <p class="modal-intro">Scegli liberamente dalla tua scheda. Gli esercizi verranno aggiunti solo a questa sessione.</p>
+    <h3 id="libraryTitle">Aggiungi esercizi salvati</h3>
+    <p class="modal-intro" id="libraryIntro">Scegli gli esercizi da aggiungere.</p>
     <div class="form-row">
       <label for="librarySearch">Cerca esercizio</label>
       <input type="search" id="librarySearch" placeholder="Nome o gruppo muscolare">

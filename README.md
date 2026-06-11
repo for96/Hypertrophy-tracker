@@ -1,6 +1,6 @@
 # Hypertrophy Tracker · PWA
 
-Tracker per il protocollo di ipertrofia: 3 allenamenti settimanali (Lun/Mer/Ven) + una sessione libera componibile con gli esercizi salvati. Vanilla JS + Vite + vite-plugin-pwa, deployabile su Vercel, installabile su iPhone come app standalone.
+Tracker per il protocollo di ipertrofia: 3 allenamenti settimanali configurabili (Lun/Mer/Ven) + una sessione libera componibile con gli esercizi salvati. Vanilla JS + Vite + vite-plugin-pwa, deployabile su Vercel, installabile su iPhone come app standalone.
 
 ## Sviluppo locale
 
@@ -68,9 +68,13 @@ I dati sono salvati in `localStorage` del browser Safari/PWA. Persistono finché
 └── package.json
 ```
 
-## Modifica esercizi
+## Scheda ed esercizi
 
-L'editor è dentro l'app (pulsante "Modifica" su ogni esercizio). Modifiche, aggiunte e cancellazioni persistono in localStorage. Per resettare alla scheda di default: in DevTools → Application → Local Storage → cancella la chiave `program-v1`.
+La sezione **Scheda** definisce lo stato iniziale persistente di LUN/MER/VEN: permette di aggiungere esercizi salvati, crearne di nuovi, modificarli, rimuoverli dal giorno e cambiarne l'ordine.
+
+Durante un allenamento gli esercizi si possono aggiungere o togliere liberamente senza modificare la Scheda. Alla chiusura o al reset, una nuova sessione standard riparte dal relativo stato iniziale. La Sessione libera riparte invece vuota.
+
+Programma, libreria esercizi, sessioni e storico persistono in `localStorage`. Per un reset completo cancella le chiavi `program-v1`, `exercise-library-v1`, `sessions-current-v2`, `session-current` e `history`.
 
 ## Note tecniche
 
