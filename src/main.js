@@ -724,15 +724,18 @@ function exerciseCard(ex, idx) {
       <span class="ex-sub ex-progress" style="font-family:'JetBrains Mono',monospace;color:${doneCount===sessSets.length && doneCount>0?'var(--accent)':'var(--text-dimmer)'};">${doneCount}/${sessSets.length}</span>
       <span class="ex-chevron">▸</span>
     </div>
+    ${variants.length > 1 ? `
+      <label class="variant-picker">
+        <span class="variant-picker-copy">
+          <strong>Scegli variante</strong>
+          <small>Valida per questa sessione</small>
+        </span>
+        <select data-action="variant" aria-label="Variante di ${esc(ex.name)}">
+          ${variants.map(variant => `<option value="${esc(variant)}" ${variant === activeVariant ? 'selected' : ''}>${esc(variant)}</option>`).join('')}
+        </select>
+      </label>
+    ` : ''}
     <div class="ex-body">
-      ${variants.length > 1 ? `
-        <label class="variant-picker">
-          <span>Variante per questa sessione</span>
-          <select data-action="variant" aria-label="Variante di ${esc(ex.name)}">
-            ${variants.map(variant => `<option value="${esc(variant)}" ${variant === activeVariant ? 'selected' : ''}>${esc(variant)}</option>`).join('')}
-          </select>
-        </label>
-      ` : ''}
       <div class="cue">
         <span class="cue-label">TECNICA</span>
         ${esc(ex.cue)}

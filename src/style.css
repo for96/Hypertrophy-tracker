@@ -322,29 +322,44 @@ nav.days button:not(.active):hover {
   grid-template-columns: 1fr minmax(150px, 220px);
   gap: 12px;
   align-items: center;
-  margin: 12px 0 0;
-  padding: 9px 10px;
-  background: rgba(200,255,0,0.045);
+  margin: 0 12px 12px;
+  padding: 10px 11px;
+  background: rgba(200,255,0,0.065);
   border: 1px solid var(--accent-dim);
   border-radius: 3px;
 }
-.variant-picker > span {
+.variant-picker-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.variant-picker-copy strong {
   color: var(--accent);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
+  font-size: 10px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+}
+.variant-picker-copy small {
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.03em;
 }
 .variant-picker select {
   width: 100%;
   min-width: 0;
   background: var(--bg);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--accent-dim);
   border-radius: 3px;
   color: var(--text);
-  padding: 7px 9px;
+  padding: 9px 10px;
   font-family: 'Manrope', sans-serif;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
 }
 .variant-picker select:focus { outline: none; border-color: var(--accent); }
 
