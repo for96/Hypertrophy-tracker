@@ -317,6 +317,37 @@ nav.days button:not(.active):hover {
 }
 .exercise.expanded .ex-body { display: block; }
 
+.variant-picker {
+  display: grid;
+  grid-template-columns: 1fr minmax(150px, 220px);
+  gap: 12px;
+  align-items: center;
+  margin: 12px 0 0;
+  padding: 9px 10px;
+  background: rgba(200,255,0,0.045);
+  border: 1px solid var(--accent-dim);
+  border-radius: 3px;
+}
+.variant-picker > span {
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.variant-picker select {
+  width: 100%;
+  min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  color: var(--text);
+  padding: 7px 9px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+}
+.variant-picker select:focus { outline: none; border-color: var(--accent); }
+
 .cue {
   background: var(--bg-elev-2);
   border-left: 2px solid var(--accent);
@@ -691,6 +722,14 @@ nav.days button:not(.active):hover {
   resize: vertical;
   min-height: 60px;
 }
+.form-help {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-dimmer);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  line-height: 1.45;
+}
 .form-row input:focus, .form-row textarea:focus, .form-row select:focus {
   outline: none;
   border-color: var(--accent);
@@ -937,6 +976,7 @@ nav.days button:not(.active):hover {
   .set-input { font-size: 13px; padding: 5px 4px; }
   .drop-zone { padding-left: 36px; }
   .drop-row { grid-template-columns: 54px 1fr 1fr 28px; gap: 4px; }
+  .variant-picker { grid-template-columns: 1fr; gap: 6px; }
   .form-grid-two { grid-template-columns: 1fr; gap: 0; }
   .rest-timer { min-width: 240px; padding: 10px 16px; }
   .rest-timer .time { font-size: 30px; }

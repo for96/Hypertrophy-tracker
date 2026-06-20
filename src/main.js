@@ -72,7 +72,7 @@ const DEFAULT_PROGRAM = {
       { id:'m6', name:'Lento avanti con manubri', target:'Deltoidi anteriori+laterali, tricipiti', sets:4, reps:'8-12', rest:120,
         cue:'Schiena appoggiata, gomiti leggermente avanti rispetto alle spalle (non sul piano frontale puro). Non bloccare i gomiti.',
         video:'shoulder press manubri seduto' },
-      { id:'m7', name:'Alzate laterali', target:'Deltoide laterale', sets:4, reps:'12-15', rest:60,
+      { id:'m7', name:'Alzate laterali', variants:['Manubri','Cavo basso','Cavigliera al cavo','Multi flight'], target:'Deltoide laterale', sets:4, reps:'12-15', rest:60,
         cue:'Leggera flessione busto in avanti. I gomiti guidano. Mignolo leggermente più alto del pollice in alto. Niente swing.',
         video:'alzate laterali deltoide tutorial' },
       { id:'m8', name:'Alzate frontali', target:'Deltoide anteriore', sets:3, reps:'12-15', rest:60,
@@ -126,7 +126,7 @@ const DEFAULT_PROGRAM = {
       { id:'x2', name:'Chest press o panca inclinata', target:'Pettorale', sets:3, reps:'10-12', rest:90,
         cue:'Carica al 70-80% di quanto fai il venerdì. Obiettivo: volume aggiuntivo a freschezza.',
         video:'chest press tutorial' },
-      { id:'x3', name:'Alzate laterali (drop set)', target:'Deltoide laterale', sets:3, reps:'12+8+6', rest:60,
+      { id:'x3', name:'Alzate laterali', variants:['Manubri','Cavo basso','Cavigliera al cavo','Multi flight'], target:'Deltoide laterale', sets:3, reps:'12-15', rest:60,
         cue:'Ultima serie: drop set triplice. Carico iniziale moderato → scendi 2 volte senza recupero.',
         video:'alzate laterali drop set' },
       { id:'x4', name:'Curl manubri o cavo', target:'Bicipiti', sets:3, reps:'12-15', rest:60,
@@ -149,52 +149,49 @@ const DEFAULT_PROGRAM = {
 
 /* Esercizi sempre disponibili nella libreria, anche per installazioni esistenti. */
 const BASE_EXERCISE_LIBRARY = [
-  { id:'base-squat-barbell', family:'Squat', variant:'Bilanciere', name:'Squat', target:'Quadricipiti, glutei, core', sets:4, reps:'6-10', rest:150, cue:'Schiena neutra, ginocchia in linea con i piedi, spingi il pavimento.', video:'barbell back squat tecnica' },
-  { id:'base-front-squat', family:'Squat', variant:'Front squat', name:'Squat', target:'Quadricipiti, core', sets:4, reps:'6-10', rest:150, cue:'Gomiti alti e busto verticale per tutta la discesa.', video:'front squat tecnica' },
-  { id:'base-rdl', family:'Stacco', variant:'Rumeno', name:'Stacco', target:'Femorali, glutei, erettori spinali', sets:4, reps:'8-12', rest:120, cue:'Anche indietro, bilanciere vicino alle gambe, fermati quando perdi tensione.', video:'romanian deadlift tecnica' },
-  { id:'base-deadlift', family:'Stacco', variant:'Convenzionale', name:'Stacco', target:'Catena posteriore, dorso, core', sets:3, reps:'4-6', rest:180, cue:'Crea tensione prima di partire e spingi il pavimento senza strappare.', video:'stacco da terra convenzionale tecnica' },
-  { id:'base-hip-thrust', family:'Hip thrust', variant:'Bilanciere', name:'Hip thrust', target:'Glutei', sets:4, reps:'8-12', rest:120, cue:'Mentone leggermente chiuso, bacino in retroversione al picco.', video:'hip thrust bilanciere tecnica' },
-  { id:'base-lunges-db', family:'Affondi', variant:'Manubri', name:'Affondi', target:'Quadricipiti, glutei', sets:3, reps:'8-12 per lato', rest:90, cue:'Passo stabile e ginocchio in linea con il piede.', video:'affondi manubri tecnica' },
-  { id:'base-bulgarian', family:'Squat unilaterale', variant:'Bulgaro', name:'Bulgarian split squat', target:'Quadricipiti, glutei', sets:3, reps:'8-12 per lato', rest:90, cue:'Carica la gamba davanti e mantieni il bacino stabile.', video:'bulgarian split squat tecnica' },
-  { id:'base-leg-curl-seated', family:'Leg curl', variant:'Seduto', name:'Leg curl', target:'Femorali', sets:3, reps:'10-15', rest:75, cue:'Bacino fermo e chiusura completa senza slancio.', video:'seated leg curl tecnica' },
-  { id:'base-calf-seated', family:'Calf raise', variant:'Seduto', name:'Calf raise', target:'Soleo, polpacci', sets:4, reps:'12-20', rest:60, cue:'Pausa in massimo allungamento e massima contrazione.', video:'seated calf raise tecnica' },
-  { id:'base-adductor', family:'Adduzioni', variant:'Macchina', name:'Adductor machine', target:'Adduttori', sets:3, reps:'12-20', rest:60, cue:'Movimento controllato, senza rimbalzo in apertura.', video:'adductor machine tecnica' },
+  { id:'base-squat', name:'Squat', variants:['Bilanciere','Front squat','Goblet squat'], target:'Quadricipiti, glutei, core', sets:4, reps:'6-10', rest:150, cue:'Schiena neutra, ginocchia in linea con i piedi e discesa controllata.', video:'squat tecnica corretta' },
+  { id:'base-deadlift', name:'Stacco', variants:['Convenzionale','Rumeno','Sumo'], target:'Catena posteriore, dorso, core', sets:3, reps:'6-10', rest:150, cue:'Crea tensione prima di partire e mantieni il carico vicino al corpo.', video:'deadlift tecnica corretta' },
+  { id:'base-hip-thrust', name:'Hip thrust', variants:['Bilanciere','Macchina','Smith machine'], target:'Glutei', sets:4, reps:'8-12', rest:120, cue:'Mentone leggermente chiuso e bacino in retroversione al picco.', video:'hip thrust tecnica' },
+  { id:'base-lunges', name:'Affondi', variants:['Manubri','Bilanciere','Camminati','Indietro'], target:'Quadricipiti, glutei', sets:3, reps:'8-12 per lato', rest:90, cue:'Passo stabile e ginocchio in linea con il piede.', video:'affondi tecnica corretta' },
+  { id:'base-bulgarian', name:'Bulgarian split squat', variants:['Manubri','Bilanciere','Smith machine'], target:'Quadricipiti, glutei', sets:3, reps:'8-12 per lato', rest:90, cue:'Carica la gamba davanti e mantieni il bacino stabile.', video:'bulgarian split squat tecnica' },
+  { id:'base-leg-curl', name:'Leg curl', variants:['Seduto','Sdraiato','In piedi'], target:'Femorali', sets:3, reps:'10-15', rest:75, cue:'Bacino fermo e chiusura completa senza slancio.', video:'leg curl tecnica' },
+  { id:'base-calf-raise', name:'Calf raise', variants:['Seduto','In piedi','Pressa'], target:'Polpacci', sets:4, reps:'12-20', rest:60, cue:'Pausa in massimo allungamento e massima contrazione.', video:'calf raise tecnica' },
+  { id:'base-adductor', name:'Adductor machine', variants:[], target:'Adduttori', sets:3, reps:'12-20', rest:60, cue:'Movimento controllato, senza rimbalzo in apertura.', video:'adductor machine tecnica' },
 
-  { id:'base-pullup', family:'Trazioni', variant:'Presa prona', name:'Trazioni', target:'Gran dorsale, bicipiti', sets:4, reps:'6-10', rest:120, cue:'Parti con scapole attive e porta il petto verso la sbarra.', video:'trazioni presa prona tecnica' },
-  { id:'base-chinup', family:'Trazioni', variant:'Presa supina', name:'Trazioni', target:'Dorso, bicipiti', sets:4, reps:'6-10', rest:120, cue:'Evita lo slancio e completa la discesa in controllo.', video:'chin up presa supina tecnica' },
-  { id:'base-row-barbell', family:'Rematore', variant:'Bilanciere', name:'Rematore', target:'Dorso, romboidi, bicipiti', sets:4, reps:'6-10', rest:120, cue:'Busto stabile e gomiti verso il retro, senza strattoni.', video:'rematore bilanciere tecnica' },
-  { id:'base-row-db', family:'Rematore', variant:'Manubrio', name:'Rematore', target:'Gran dorsale, mid-back', sets:3, reps:'8-12 per lato', rest:90, cue:'Spalla lontana dall’orecchio e gomito verso l’anca.', video:'rematore manubrio tecnica' },
-  { id:'base-row-tbar', family:'Rematore', variant:'T-bar', name:'Rematore', target:'Dorso, romboidi', sets:4, reps:'8-12', rest:120, cue:'Mantieni il petto stabile e chiudi le scapole.', video:'t bar row tecnica' },
-  { id:'base-lat-neutral', family:'Lat machine', variant:'Presa neutra', name:'Lat machine', target:'Gran dorsale, bicipiti', sets:4, reps:'8-12', rest:90, cue:'Tira i gomiti verso i fianchi senza arretrare col busto.', video:'lat pulldown neutral grip tecnica' },
-  { id:'base-lat-wide', family:'Lat machine', variant:'Presa larga', name:'Lat machine', target:'Gran dorsale, upper back', sets:3, reps:'10-12', rest:90, cue:'Petto alto e scapole depresse prima della tirata.', video:'wide grip lat pulldown tecnica' },
-  { id:'base-seated-row-neutral', family:'Pulley', variant:'Presa neutra', name:'Pulley basso', target:'Dorso, romboidi', sets:3, reps:'10-15', rest:90, cue:'Non oscillare con il busto; chiudi i gomiti dietro.', video:'seated cable row neutral grip tecnica' },
+  { id:'base-pullup', name:'Trazioni', variants:['Presa prona','Presa supina','Presa neutra','Assistite'], target:'Gran dorsale, bicipiti', sets:4, reps:'6-10', rest:120, cue:'Parti con scapole attive e completa la discesa in controllo.', video:'trazioni tecnica corretta' },
+  { id:'base-row', name:'Rematore', variants:['Bilanciere','Manubrio','T-bar','Row machine'], target:'Dorso, romboidi, bicipiti', sets:4, reps:'8-12', rest:120, cue:'Busto stabile e gomiti verso il retro, senza strattoni.', video:'rematore tecnica corretta' },
+  { id:'base-lat-machine', name:'Lat machine', variants:['Presa larga','Presa neutra','Presa stretta','Presa supina'], target:'Gran dorsale, bicipiti', sets:4, reps:'8-12', rest:90, cue:'Petto alto e gomiti verso i fianchi senza oscillare col busto.', video:'lat machine tecnica' },
+  { id:'base-seated-row', name:'Pulley basso', variants:['Triangolo','Presa larga','Corda'], target:'Dorso, romboidi', sets:3, reps:'10-15', rest:90, cue:'Non oscillare con il busto; chiudi i gomiti dietro.', video:'pulley basso tecnica' },
 
-  { id:'base-bench-db', family:'Panca piana', variant:'Manubri', name:'Panca piana', target:'Pettorali, tricipiti', sets:4, reps:'8-12', rest:120, cue:'Scapole addotte e traiettoria stabile dei manubri.', video:'dumbbell bench press tecnica' },
-  { id:'base-incline-barbell', family:'Panca inclinata', variant:'Bilanciere', name:'Panca inclinata', target:'Pettorale alto, tricipiti', sets:4, reps:'6-10', rest:120, cue:'Panca moderatamente inclinata e scapole ferme.', video:'incline barbell bench press tecnica' },
-  { id:'base-dips-chest', family:'Dip', variant:'Focus petto', name:'Dip alle parallele', target:'Pettorali, tricipiti', sets:3, reps:'6-12', rest:120, cue:'Busto leggermente avanti e discesa controllata.', video:'chest dips tecnica' },
-  { id:'base-cable-fly-high', family:'Croci ai cavi', variant:'Dall’alto', name:'Croci ai cavi', target:'Pettorali', sets:3, reps:'12-15', rest:60, cue:'Gomiti morbidi e traiettoria ad arco verso il basso.', video:'high to low cable fly tecnica' },
-  { id:'base-cable-fly-low', family:'Croci ai cavi', variant:'Dal basso', name:'Croci ai cavi', target:'Pettorale alto', sets:3, reps:'12-15', rest:60, cue:'Porta le mani in alto e al centro senza alzare le spalle.', video:'low to high cable fly tecnica' },
-  { id:'base-pushup', family:'Piegamenti', variant:'Corpo libero', name:'Piegamenti', target:'Pettorali, tricipiti, core', sets:3, reps:'AMRAP tecnico', rest:75, cue:'Corpo in linea e petto verso il pavimento.', video:'push up tecnica corretta' },
+  { id:'base-flat-bench', name:'Panca piana', variants:['Bilanciere','Manubri','Smith machine','Presa stretta'], target:'Pettorali, tricipiti', sets:4, reps:'6-10', rest:120, cue:'Scapole addotte e traiettoria stabile durante tutta la ripetizione.', video:'panca piana tecnica' },
+  { id:'base-incline-bench', name:'Panca inclinata', variants:['Bilanciere','Manubri','Smith machine'], target:'Pettorale alto, tricipiti', sets:4, reps:'8-12', rest:120, cue:'Panca moderatamente inclinata e scapole ferme.', video:'panca inclinata tecnica' },
+  { id:'base-dips', name:'Dip alle parallele', variants:['Focus petto','Focus tricipiti','Assistite'], target:'Pettorali, tricipiti', sets:3, reps:'6-12', rest:120, cue:'Discesa controllata e spalle lontane dalle orecchie.', video:'dip parallele tecnica' },
+  { id:'base-cable-fly', name:'Croci ai cavi', variants:['Dall’alto','Orizzontali','Dal basso'], target:'Pettorali', sets:3, reps:'12-15', rest:60, cue:'Gomiti morbidi e traiettoria ad arco senza perdere tensione.', video:'croci ai cavi tecnica' },
+  { id:'base-pushup', name:'Piegamenti', variants:['Standard','Piedi rialzati','Zavorrati'], target:'Pettorali, tricipiti, core', sets:3, reps:'AMRAP tecnico', rest:75, cue:'Corpo in linea e petto verso il pavimento.', video:'push up tecnica corretta' },
 
-  { id:'base-ohp-barbell', family:'Shoulder press', variant:'Bilanciere', name:'Military press', target:'Deltoidi, tricipiti', sets:4, reps:'6-10', rest:120, cue:'Glutei e addome attivi, bilanciere vicino al viso.', video:'military press bilanciere tecnica' },
-  { id:'base-arnold-press', family:'Shoulder press', variant:'Arnold', name:'Arnold press', target:'Deltoidi anteriori e laterali', sets:3, reps:'8-12', rest:90, cue:'Rotazione fluida senza perdere controllo delle scapole.', video:'arnold press tecnica' },
-  { id:'base-lateral-db', family:'Alzate laterali', variant:'Manubri', name:'Alzate laterali', target:'Deltoide laterale', sets:4, reps:'12-20', rest:60, cue:'Guida coi gomiti e limita lo slancio.', video:'alzate laterali manubri tecnica' },
-  { id:'base-lateral-cable', family:'Alzate laterali', variant:'Cavo basso', name:'Alzate laterali', target:'Deltoide laterale', sets:4, reps:'12-20', rest:60, cue:'Mantieni tensione continua e polso neutro.', video:'cable lateral raise tecnica' },
-  { id:'base-lateral-ankle', family:'Alzate laterali', variant:'Cavigliera al cavo', name:'Alzate laterali', target:'Deltoide laterale', sets:3, reps:'12-20', rest:60, cue:'Cavo fissato all’avambraccio per ridurre il limite della presa.', video:'cable cuff lateral raise tecnica' },
-  { id:'base-lateral-multiflight', family:'Alzate laterali', variant:'Multi flight', name:'Alzate laterali', target:'Deltoide laterale', sets:4, reps:'10-15', rest:60, cue:'Regola il sedile per allineare il perno alla spalla.', video:'lateral raise machine tecnica' },
-  { id:'base-rear-delt-machine', family:'Deltoide posteriore', variant:'Reverse pec deck', name:'Reverse pec deck', target:'Deltoide posteriore, romboidi', sets:4, reps:'12-20', rest:60, cue:'Petto appoggiato e braccia aperte senza compensare col trapezio.', video:'reverse pec deck rear delt tecnica' },
+  { id:'base-shoulder-press', name:'Shoulder press', variants:['Manubri','Bilanciere','Arnold press','Macchina'], target:'Deltoidi, tricipiti', sets:4, reps:'8-12', rest:120, cue:'Addome attivo e traiettoria controllata senza sollevare le spalle.', video:'shoulder press tecnica' },
+  { id:'base-lateral-raise', name:'Alzate laterali', variants:['Manubri','Cavo basso','Cavigliera al cavo','Multi flight'], target:'Deltoide laterale', sets:4, reps:'12-20', rest:60, cue:'Guida con i gomiti, mantieni il polso neutro e limita lo slancio.', video:'alzate laterali tecnica' },
+  { id:'base-rear-delt', name:'Deltoide posteriore', variants:['Reverse pec deck','Croci ai cavi','Manubri'], target:'Deltoide posteriore, romboidi', sets:4, reps:'12-20', rest:60, cue:'Petto stabile e braccia aperte senza compensare col trapezio.', video:'rear delt fly tecnica' },
 
-  { id:'base-curl-ez', family:'Curl', variant:'Bilanciere EZ', name:'Curl', target:'Bicipiti', sets:4, reps:'8-12', rest:75, cue:'Gomiti fermi e discesa completa in controllo.', video:'ez bar curl tecnica' },
-  { id:'base-preacher-curl', family:'Curl', variant:'Panca Scott', name:'Curl', target:'Bicipiti, brachiale', sets:3, reps:'10-15', rest:75, cue:'Non iperestendere il gomito in basso.', video:'preacher curl tecnica' },
-  { id:'base-incline-curl', family:'Curl', variant:'Manubri su inclinata', name:'Curl', target:'Bicipite capo lungo', sets:3, reps:'10-15', rest:75, cue:'Spalle ferme dietro il busto e supinazione completa.', video:'incline dumbbell curl tecnica' },
-  { id:'base-overhead-triceps', family:'Estensioni tricipiti', variant:'Cavo sopra la testa', name:'Estensioni tricipiti', target:'Tricipite capo lungo', sets:3, reps:'10-15', rest:75, cue:'Gomiti stretti e allungamento completo dietro la testa.', video:'overhead cable triceps extension tecnica' },
-  { id:'base-skullcrusher', family:'French press', variant:'Bilanciere EZ', name:'French press', target:'Tricipiti', sets:3, reps:'8-12', rest:90, cue:'Gomiti stabili e bilanciere dietro la fronte.', video:'ez bar skull crusher tecnica' },
-  { id:'base-close-grip-bench', family:'Panca piana', variant:'Presa stretta', name:'Panca presa stretta', target:'Tricipiti, pettorali', sets:4, reps:'6-10', rest:120, cue:'Presa poco più stretta delle spalle e gomiti controllati.', video:'close grip bench press tecnica' },
+  { id:'base-curl', name:'Curl bicipiti', variants:['Bilanciere EZ','Manubri','Panca Scott','Manubri su inclinata','Cavo basso'], target:'Bicipiti', sets:3, reps:'8-12', rest:75, cue:'Gomiti fermi e discesa completa in controllo.', video:'curl bicipiti tecnica' },
+  { id:'base-hammer-curl', name:'Hammer curl', variants:['Manubri','Corda al cavo'], target:'Brachiale, brachioradiale', sets:3, reps:'10-15', rest:75, cue:'Presa neutra e gomiti fermi vicino ai fianchi.', video:'hammer curl tecnica' },
+  { id:'base-overhead-triceps', name:'Estensioni tricipiti sopra la testa', variants:['Cavo','Manubrio','Bilanciere EZ'], target:'Tricipite capo lungo', sets:3, reps:'10-15', rest:75, cue:'Gomiti stretti e allungamento completo dietro la testa.', video:'overhead triceps extension tecnica' },
+  { id:'base-pushdown', name:'Push-down', variants:['Sbarra','Corda','Presa inversa'], target:'Tricipiti', sets:3, reps:'10-15', rest:75, cue:'Gomiti fermi ai fianchi ed estensione completa.', video:'triceps pushdown tecnica' },
 
-  { id:'base-cable-crunch', family:'Addome', variant:'Crunch al cavo', name:'Crunch al cavo', target:'Retto addominale', sets:3, reps:'12-20', rest:60, cue:'Fletti il busto con l’addome senza tirare con le braccia.', video:'cable crunch tecnica' },
-  { id:'base-hanging-raise', family:'Addome', variant:'Sollevamento gambe', name:'Leg raise alla sbarra', target:'Addome, flessori anca', sets:3, reps:'8-15', rest:60, cue:'Evita lo slancio e chiudi il bacino verso le costole.', video:'hanging leg raise tecnica' },
-  { id:'base-plank', family:'Core', variant:'Plank', name:'Plank', target:'Core', sets:3, reps:'30-60 sec', rest:60, cue:'Glutei stretti e bacino neutro.', video:'plank tecnica corretta' }
+  { id:'base-cable-crunch', name:'Crunch', variants:['Cavo','Macchina','Corpo libero'], target:'Retto addominale', sets:3, reps:'12-20', rest:60, cue:'Fletti il busto con l’addome senza tirare con le braccia.', video:'crunch addominali tecnica' },
+  { id:'base-leg-raise', name:'Leg raise', variants:['Alla sbarra','Alle parallele','Su panca'], target:'Addome, flessori anca', sets:3, reps:'8-15', rest:60, cue:'Evita lo slancio e chiudi il bacino verso le costole.', video:'leg raise tecnica' },
+  { id:'base-plank', name:'Plank', variants:['Frontale','Laterale','Zavorrato'], target:'Core', sets:3, reps:'30-60 sec', rest:60, cue:'Glutei stretti e bacino neutro.', video:'plank tecnica corretta' }
 ];
+
+const LEGACY_BASE_EXERCISE_IDS = new Set([
+  'base-squat-barbell','base-front-squat','base-rdl','base-deadlift','base-hip-thrust','base-lunges-db',
+  'base-bulgarian','base-leg-curl-seated','base-calf-seated','base-adductor','base-pullup','base-chinup',
+  'base-row-barbell','base-row-db','base-row-tbar','base-lat-neutral','base-lat-wide','base-seated-row-neutral',
+  'base-bench-db','base-incline-barbell','base-dips-chest','base-cable-fly-high','base-cable-fly-low','base-pushup',
+  'base-ohp-barbell','base-arnold-press','base-lateral-db','base-lateral-cable','base-lateral-ankle',
+  'base-lateral-multiflight','base-rear-delt-machine','base-curl-ez','base-preacher-curl','base-incline-curl',
+  'base-overhead-triceps','base-skullcrusher','base-close-grip-bench','base-cable-crunch','base-hanging-raise','base-plank'
+]);
 
 const DAYS_ORDER = ['lun','mer','ven','free'];
 const LIBRARY_DAYS = ['lun','mer','ven','extra'];
@@ -251,10 +248,11 @@ async function storageSet(key, value) {
 
 /* ============== INIT ============== */
 async function init() {
-  state.program = await storageGet(KEYS.PROGRAM, DEFAULT_PROGRAM);
+  state.program = normalizeProgramExercises(await storageGet(KEYS.PROGRAM, DEFAULT_PROGRAM));
   for (const d of [...LIBRARY_DAYS, 'free']) {
     if (!state.program[d]) state.program[d] = DEFAULT_PROGRAM[d];
   }
+  await storageSet(KEYS.PROGRAM, state.program);
   state.exerciseLibrary = normalizeExerciseLibrary(
     await storageGet(KEYS.LIBRARY, null),
     state.program
@@ -318,7 +316,7 @@ function normalizeSession(session, day) {
     date: session && session.date ? session.date : dateKey(new Date()),
     sets: session && session.sets && typeof session.sets === 'object' ? session.sets : {},
     exercises: Array.isArray(session?.exercises)
-      ? session.exercises.map(cloneExercise)
+      ? session.exercises.map(cloneExerciseWithKnownVariants)
       : initialExercisesForDay(day)
   };
   return normalized;
@@ -342,17 +340,23 @@ function migrateLegacyFreeSession(session) {
     ...session,
     day: 'free',
     exercises: Array.isArray(session.exercises)
-      ? session.exercises
+      ? session.exercises.map(cloneExerciseWithKnownVariants)
       : (state.program?.extra?.exercises || []).map(cloneExercise)
   };
 }
 
 function cloneExercise(ex) {
+  const variants = normalizeVariants(ex?.variants, ex?.variant);
+  let name = ex?.family && ex?.variant ? ex.family : ex.name;
+  if (exerciseNameKey(name) === 'alzate laterali (drop set)') name = 'Alzate laterali';
+  const selectedVariant = variants.includes(ex?.selectedVariant)
+    ? ex.selectedVariant
+    : (variants[0] || '');
   return {
     id: ex.id,
-    name: ex.name,
-    family: ex.family || '',
-    variant: ex.variant || '',
+    name,
+    variants,
+    selectedVariant,
     target: ex.target || '',
     sets: Math.max(1, Number(ex.sets) || 3),
     reps: ex.reps || '8-12',
@@ -363,33 +367,109 @@ function cloneExercise(ex) {
   };
 }
 
+function normalizeVariants(variants, legacyVariant = '') {
+  const values = Array.isArray(variants) ? variants : [];
+  return [...new Set([...values, legacyVariant]
+    .map(value => String(value || '').trim())
+    .filter(Boolean))];
+}
+
+function cloneExerciseWithKnownVariants(exercise) {
+  const cloned = cloneExercise(exercise);
+  const knownExercise = state.exerciseLibrary.find(item =>
+    item.id === cloned.id || exerciseNameKey(item.name) === exerciseNameKey(cloned.name)
+  ) || BASE_EXERCISE_LIBRARY.find(item =>
+    exerciseNameKey(item.name) === exerciseNameKey(cloned.name)
+  );
+  return knownExercise ? mergeExerciseVariants(cloned, knownExercise) : cloned;
+}
+
+function exerciseNameKey(name) {
+  return String(name || '').trim().toLocaleLowerCase('it');
+}
+
+function mergeExerciseVariants(target, source) {
+  target.variants = normalizeVariants([...(target.variants || []), ...(source.variants || [])]);
+  if (!target.selectedVariant || !target.variants.includes(target.selectedVariant)) {
+    target.selectedVariant = target.variants[0] || '';
+  }
+  return target;
+}
+
+function normalizeProgramExercises(program) {
+  const normalized = program && typeof program === 'object'
+    ? program
+    : JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
+
+  for (const dayKey of [...LIBRARY_DAYS, 'free']) {
+    const day = normalized[dayKey];
+    if (!day || !Array.isArray(day.exercises)) continue;
+    const byName = new Map();
+    const exercises = [];
+
+    for (const rawExercise of day.exercises) {
+      const exercise = cloneExercise(rawExercise);
+      const baseExercise = BASE_EXERCISE_LIBRARY.find(base =>
+        exerciseNameKey(base.name) === exerciseNameKey(exercise.name)
+      );
+      if (baseExercise) mergeExerciseVariants(exercise, baseExercise);
+
+      const key = exerciseNameKey(exercise.name);
+      const existing = byName.get(key);
+      if (existing && (LEGACY_BASE_EXERCISE_IDS.has(rawExercise.id) || baseExercise)) {
+        mergeExerciseVariants(existing, exercise);
+        continue;
+      }
+      byName.set(key, exercise);
+      exercises.push(exercise);
+    }
+    day.exercises = exercises;
+  }
+  return normalized;
+}
+
 function initialExercisesForDay(day) {
   if (day === 'free') return [];
   return (state.program?.[day]?.exercises || []).map(cloneExercise);
 }
 
 function normalizeExerciseLibrary(storedLibrary, program) {
-  const byId = new Map();
+  const byName = new Map();
+  const addExercise = (rawExercise) => {
+    const exercise = cloneExercise(rawExercise);
+    const key = exerciseNameKey(exercise.name);
+    const existing = byName.get(key);
+    if (existing) {
+      mergeExerciseVariants(existing, exercise);
+      return;
+    }
+    byName.set(key, exercise);
+  };
+
   if (Array.isArray(storedLibrary)) {
     for (const ex of storedLibrary) {
-      if (ex?.id) byId.set(ex.id, cloneExercise(ex));
+      if (ex?.id && !LEGACY_BASE_EXERCISE_IDS.has(ex.id)) addExercise(ex);
     }
   }
   for (const dayKey of LIBRARY_DAYS) {
     for (const ex of program?.[dayKey]?.exercises || []) {
-      if (!byId.has(ex.id)) {
-        byId.set(ex.id, { ...cloneExercise(ex), sourceDay: dayKey });
-      }
+      addExercise({ ...ex, sourceDay: ex.sourceDay || dayKey });
     }
   }
-  for (const ex of BASE_EXERCISE_LIBRARY) {
-    if (!byId.has(ex.id)) byId.set(ex.id, cloneExercise(ex));
-  }
-  return [...byId.values()];
+  for (const ex of BASE_EXERCISE_LIBRARY) addExercise(ex);
+  return [...byName.values()];
 }
 
-function exerciseDisplayName(ex) {
-  return ex.variant ? `${ex.name} · ${ex.variant}` : ex.name;
+function selectedExerciseVariant(ex) {
+  const variants = normalizeVariants(ex?.variants);
+  return variants.includes(ex?.selectedVariant)
+    ? ex.selectedVariant
+    : (variants[0] || '');
+}
+
+function exerciseDisplayName(ex, includeVariant = true) {
+  const variant = selectedExerciseVariant(ex);
+  return includeVariant && variant ? `${ex.name} · ${variant}` : ex.name;
 }
 
 function ensureDaySession(day) {
@@ -423,6 +503,7 @@ function checkUnclosedSession(day) {
           date: session.date,
           day: session.day,
           exerciseNames: exerciseNamesForSession(session),
+          exerciseVariants: exerciseVariantsForSession(session),
           sets: JSON.parse(JSON.stringify(session.sets))
         });
         storageSet(KEYS.HISTORY, state.history);
@@ -552,8 +633,8 @@ function renderProgram() {
     <div class="program-exercise" data-id="${esc(ex.id)}">
       <span class="ex-num">${String(idx + 1).padStart(2, '0')}</span>
       <div class="program-exercise-main">
-        <strong>${esc(exerciseDisplayName(ex))}</strong>
-        <span>${ex.sets}x${esc(ex.reps)} · rec ${ex.rest}s · ${esc(ex.target)}</span>
+        <strong>${esc(exerciseDisplayName(ex, false))}</strong>
+        <span>${ex.variants.length > 1 ? `${ex.variants.length} varianti · ` : ''}${ex.sets}x${esc(ex.reps)} · rec ${ex.rest}s · ${esc(ex.target)}</span>
       </div>
       <div class="program-exercise-actions">
         <button class="mini-btn" data-program-action="up" ${idx === 0 ? 'disabled' : ''}>Su</button>
@@ -584,19 +665,29 @@ function exerciseCard(ex, idx) {
   const doneCount = sessSets.filter(isCompletedSet).length;
   if (doneCount === sessSets.length && sessSets.length > 0) card.classList.add('complete');
 
-  const last = findLastSessionFor(ex.id);
+  const last = findLastSessionFor(ex);
+  const variants = normalizeVariants(ex.variants);
+  const activeVariant = selectedExerciseVariant(ex);
 
   card.innerHTML = `
     <div class="ex-head">
       <span class="ex-num">${String(idx+1).padStart(2,'0')}</span>
       <div class="ex-title-wrap">
-        <div class="ex-title">${esc(exerciseDisplayName(ex))}</div>
-        <div class="ex-sub"><b>${ex.sets}x${esc(ex.reps)}</b> · rec <b>${ex.rest}s</b> · ${esc(ex.target)}</div>
+        <div class="ex-title">${esc(exerciseDisplayName(ex, false))}</div>
+        <div class="ex-sub">${activeVariant ? `<b>${esc(activeVariant)}</b> · ` : ''}${ex.sets}x${esc(ex.reps)} · rec ${ex.rest}s · ${esc(ex.target)}</div>
       </div>
       <span class="ex-sub" style="font-family:'JetBrains Mono',monospace;color:${doneCount===sessSets.length && doneCount>0?'var(--accent)':'var(--text-dimmer)'};">${doneCount}/${sessSets.length}</span>
       <span class="ex-chevron">▸</span>
     </div>
     <div class="ex-body">
+      ${variants.length > 1 ? `
+        <label class="variant-picker">
+          <span>Variante per questa sessione</span>
+          <select data-action="variant" aria-label="Variante di ${esc(ex.name)}">
+            ${variants.map(variant => `<option value="${esc(variant)}" ${variant === activeVariant ? 'selected' : ''}>${esc(variant)}</option>`).join('')}
+          </select>
+        </label>
+      ` : ''}
       <div class="cue">
         <span class="cue-label">TECNICA</span>
         ${esc(ex.cue)}
@@ -653,6 +744,15 @@ function exerciseCard(ex, idx) {
     if (e.target.closest('button, input, a')) return;
     toggleExpand(ex.id);
   });
+
+  const variantSelect = card.querySelector('[data-action="variant"]');
+  if (variantSelect) {
+    variantSelect.addEventListener('change', () => {
+      ex.selectedVariant = variantSelect.value;
+      saveSession();
+      render();
+    });
+  }
 
   card.querySelectorAll('.set-block').forEach(block => {
     const setIdx = parseInt(block.dataset.set);
@@ -790,10 +890,14 @@ function isoWeek(d) {
 }
 
 /* ============== HISTORY ============== */
-function findLastSessionFor(exId) {
+function findLastSessionFor(exercise) {
+  const exId = exercise.id;
+  const currentVariant = selectedExerciseVariant(exercise);
   for (let i = state.history.length - 1; i >= 0; i--) {
     const s = state.history[i];
     if (s.sets[exId]) {
+      const previousVariant = s.exerciseVariants?.[exId] || '';
+      if (currentVariant && previousVariant && currentVariant !== previousVariant) continue;
       const done = s.sets[exId].filter(isCompletedSet);
       if (done.length === 0) continue;
       const top = done.reduce((a,b) => (setVolume(a) > setVolume(b) ? a : b));
@@ -808,6 +912,13 @@ function exerciseNamesForSession(session) {
   return (session.exercises || []).reduce((names, ex) => {
     names[ex.id] = exerciseDisplayName(ex);
     return names;
+  }, {});
+}
+
+function exerciseVariantsForSession(session) {
+  return (session.exercises || []).reduce((variants, ex) => {
+    variants[ex.id] = selectedExerciseVariant(ex);
+    return variants;
   }, {});
 }
 
@@ -924,6 +1035,7 @@ async function finishDay() {
     date: state.session.date,
     day: state.session.day,
     exerciseNames: exerciseNamesForSession(state.session),
+    exerciseVariants: exerciseVariantsForSession(state.session),
     sets: JSON.parse(JSON.stringify(state.session.sets))
   });
   await storageSet(KEYS.HISTORY, state.history);
@@ -956,10 +1068,7 @@ async function clearHistory() {
 function savedExerciseLibrary() {
   return state.exerciseLibrary
     .map(cloneExercise)
-    .sort((a, b) => {
-      const familyOrder = (a.family || a.name).localeCompare(b.family || b.name, 'it');
-      return familyOrder || (a.variant || '').localeCompare(b.variant || '', 'it');
-    });
+    .sort((a, b) => a.name.localeCompare(b.name, 'it'));
 }
 
 function openExerciseLibrary(mode = 'session') {
@@ -991,7 +1100,7 @@ function renderExerciseLibrary() {
   const existingIds = new Set((targetExercises || []).map(ex => ex.id));
   const library = savedExerciseLibrary().filter(ex => {
     if (!query) return true;
-    return `${ex.name} ${ex.family} ${ex.variant} ${ex.target} ${LIBRARY_DAY_LABELS[ex.sourceDay] || ''}`
+    return `${ex.name} ${(ex.variants || []).join(' ')} ${ex.target} ${LIBRARY_DAY_LABELS[ex.sourceDay] || ''}`
       .toLocaleLowerCase('it')
       .includes(query);
   });
@@ -1006,8 +1115,8 @@ function renderExerciseLibrary() {
         <label class="library-item ${alreadyAdded ? 'disabled' : ''} ${selected ? 'selected' : ''}">
           <input type="checkbox" value="${esc(ex.id)}" ${alreadyAdded ? 'disabled' : ''} ${selected ? 'checked' : ''}>
           <span>
-            <span class="library-name">${esc(exerciseDisplayName(ex))}</span>
-            <span class="library-target">${esc(ex.family || ex.target)}${ex.family && ex.target ? ` · ${esc(ex.target)}` : ''}</span>
+            <span class="library-name">${esc(exerciseDisplayName(ex, false))}</span>
+            <span class="library-target">${ex.variants.length > 1 ? `Varianti: ${esc(ex.variants.join(', '))} · ` : ''}${esc(ex.target)}</span>
           </span>
           <span class="${alreadyAdded ? 'library-added' : 'library-source'}">
             ${alreadyAdded ? 'Aggiunto' : 'Salvato'}
@@ -1103,10 +1212,9 @@ function openEdit(exId, programDay = state.programDay) {
   const ex = state.exerciseLibrary.find(e => e.id === exId)
     || state.program[programDay].exercises.find(e => e.id === exId);
   if (!ex) return;
-  document.getElementById('editTitle').textContent = 'Modifica · ' + exerciseDisplayName(ex);
+  document.getElementById('editTitle').textContent = 'Modifica · ' + exerciseDisplayName(ex, false);
   document.getElementById('ed-name').value = ex.name;
-  document.getElementById('ed-family').value = ex.family || '';
-  document.getElementById('ed-variant').value = ex.variant || '';
+  document.getElementById('ed-variants').value = (ex.variants || []).join('\n');
   document.getElementById('ed-target').value = ex.target;
   document.getElementById('ed-sets').value = ex.sets;
   document.getElementById('ed-reps').value = ex.reps;
@@ -1122,8 +1230,7 @@ function openAdd(programDay = state.programDay) {
   state.editingProgramDay = programDay;
   document.getElementById('editTitle').textContent = 'Nuovo esercizio';
   document.getElementById('ed-name').value = '';
-  document.getElementById('ed-family').value = '';
-  document.getElementById('ed-variant').value = '';
+  document.getElementById('ed-variants').value = '';
   document.getElementById('ed-target').value = '';
   document.getElementById('ed-sets').value = 3;
   document.getElementById('ed-reps').value = '10-12';
@@ -1147,8 +1254,7 @@ async function saveEdit() {
   const wasEditing = Boolean(editingId);
   const data = {
     name: document.getElementById('ed-name').value.trim() || 'Esercizio',
-    family: document.getElementById('ed-family').value.trim(),
-    variant: document.getElementById('ed-variant').value.trim(),
+    variants: normalizeVariants(document.getElementById('ed-variants').value.split(/\r?\n|,/)),
     target: document.getElementById('ed-target').value.trim(),
     sets: Math.max(1, parseInt(document.getElementById('ed-sets').value) || 3),
     reps: document.getElementById('ed-reps').value.trim() || '8-12',
@@ -1156,6 +1262,7 @@ async function saveEdit() {
     cue: document.getElementById('ed-cue').value.trim(),
     video: document.getElementById('ed-video').value.trim() || (document.getElementById('ed-name').value + ' tutorial')
   };
+  data.selectedVariant = data.variants[0] || '';
   if (wasEditing) {
     const ex = state.exerciseLibrary.find(e => e.id === editingId);
     if (!ex) return;
