@@ -183,15 +183,29 @@ const BASE_EXERCISE_LIBRARY = [
   { id:'base-plank', name:'Plank', variants:['Frontale','Laterale','Zavorrato'], target:'Core', sets:3, reps:'30-60 sec', rest:60, cue:'Glutei stretti e bacino neutro.', video:'plank tecnica corretta' }
 ];
 
-const LEGACY_BASE_EXERCISE_IDS = new Set([
-  'base-squat-barbell','base-front-squat','base-rdl','base-deadlift','base-hip-thrust','base-lunges-db',
-  'base-bulgarian','base-leg-curl-seated','base-calf-seated','base-adductor','base-pullup','base-chinup',
-  'base-row-barbell','base-row-db','base-row-tbar','base-lat-neutral','base-lat-wide','base-seated-row-neutral',
-  'base-bench-db','base-incline-barbell','base-dips-chest','base-cable-fly-high','base-cable-fly-low','base-pushup',
-  'base-ohp-barbell','base-arnold-press','base-lateral-db','base-lateral-cable','base-lateral-ankle',
-  'base-lateral-multiflight','base-rear-delt-machine','base-curl-ez','base-preacher-curl','base-incline-curl',
-  'base-overhead-triceps','base-skullcrusher','base-close-grip-bench','base-cable-crunch','base-hanging-raise','base-plank'
-]);
+const LEGACY_BASE_PARENT_IDS = new Map(Object.entries({
+  'base-squat-barbell':'base-squat', 'base-front-squat':'base-squat',
+  'base-rdl':'base-deadlift', 'base-deadlift':'base-deadlift',
+  'base-hip-thrust':'base-hip-thrust', 'base-lunges-db':'base-lunges',
+  'base-bulgarian':'base-bulgarian', 'base-leg-curl-seated':'base-leg-curl',
+  'base-calf-seated':'base-calf-raise', 'base-adductor':'base-adductor',
+  'base-pullup':'base-pullup', 'base-chinup':'base-pullup',
+  'base-row-barbell':'base-row', 'base-row-db':'base-row', 'base-row-tbar':'base-row',
+  'base-lat-neutral':'base-lat-machine', 'base-lat-wide':'base-lat-machine',
+  'base-seated-row-neutral':'base-seated-row',
+  'base-bench-db':'base-flat-bench', 'base-close-grip-bench':'base-flat-bench',
+  'base-incline-barbell':'base-incline-bench', 'base-dips-chest':'base-dips',
+  'base-cable-fly-high':'base-cable-fly', 'base-cable-fly-low':'base-cable-fly',
+  'base-pushup':'base-pushup', 'base-ohp-barbell':'base-shoulder-press',
+  'base-arnold-press':'base-shoulder-press',
+  'base-lateral-db':'base-lateral-raise', 'base-lateral-cable':'base-lateral-raise',
+  'base-lateral-ankle':'base-lateral-raise', 'base-lateral-multiflight':'base-lateral-raise',
+  'base-rear-delt-machine':'base-rear-delt',
+  'base-curl-ez':'base-curl', 'base-preacher-curl':'base-curl', 'base-incline-curl':'base-curl',
+  'base-overhead-triceps':'base-overhead-triceps', 'base-skullcrusher':'base-overhead-triceps',
+  'base-cable-crunch':'base-cable-crunch', 'base-hanging-raise':'base-leg-raise',
+  'base-plank':'base-plank'
+}));
 
 const DAYS_ORDER = ['lun','mer','ven','free'];
 const LIBRARY_DAYS = ['lun','mer','ven','extra'];
@@ -214,7 +228,9 @@ let state = {
   view: 'workout',
   expanded: new Set(),
   editingExerciseId: null,
+  editingParentId: null,
   editingProgramDay: null,
+  deletedExerciseParents: new Set(),
   libraryMode: 'session',
   librarySelection: new Set(),
   timer: { remaining: 0, total: 0, intervalId: null, exId: null, audioContext: null }
@@ -224,6 +240,8 @@ let state = {
 const KEYS = {
   PROGRAM: 'program-v1',
   LIBRARY: 'exercise-library-v1',
+  LIBRARY_SCHEMA: 'exercise-library-schema-v1',
+  DELETED_EXERCISES: 'exercise-library-deleted-v1',
   SESSION: 'session-current',
   SESSIONS: 'sessions-current-v2',
   HISTORY: 'history',
@@ -248,16 +266,34 @@ async function storageSet(key, value) {
 
 /* ============== INIT ============== */
 async function init() {
-  state.program = normalizeProgramExercises(await storageGet(KEYS.PROGRAM, DEFAULT_PROGRAM));
+  const librarySchema = await storageGet(KEYS.LIBRARY_SCHEMA, 1);
+  state.deletedExerciseParents = new Set(await storageGet(KEYS.DELETED_EXERCISES, []));
+  state.program = normalizeProgramExercises(
+    await storageGet(KEYS.PROGRAM, DEFAULT_PROGRAM),
+    state.deletedExerciseParents
+  );
   for (const d of [...LIBRARY_DAYS, 'free']) {
-    if (!state.program[d]) state.program[d] = DEFAULT_PROGRAM[d];
+    if (!state.program[d]) {
+      const fallbackDay = JSON.parse(JSON.stringify(DEFAULT_PROGRAM[d]));
+      fallbackDay.exercises = fallbackDay.exercises
+        .map(cloneExercise)
+        .filter(exercise => !state.deletedExerciseParents.has(exercise.parentId));
+      state.program[d] = fallbackDay;
+    }
   }
-  await storageSet(KEYS.PROGRAM, state.program);
   state.exerciseLibrary = normalizeExerciseLibrary(
     await storageGet(KEYS.LIBRARY, null),
-    state.program
+    state.program,
+    {
+      deletedParents: state.deletedExerciseParents,
+      migrateDefaults: librarySchema < 2
+    }
   );
+  if (librarySchema < 2) syncProgramVariantsFromLibrary(state.program, state.exerciseLibrary);
+  await storageSet(KEYS.PROGRAM, state.program);
   await storageSet(KEYS.LIBRARY, state.exerciseLibrary);
+  await storageSet(KEYS.LIBRARY_SCHEMA, 2);
+  await storageSet(KEYS.DELETED_EXERCISES, [...state.deletedExerciseParents]);
   state.history = await storageGet(KEYS.HISTORY, []);
   const storedLegacySession = await storageGet(KEYS.SESSION, { day:null, date:null, sets:{} });
   const legacySession = migrateLegacyFreeSession(storedLegacySession);
@@ -349,11 +385,18 @@ function cloneExercise(ex) {
   const variants = normalizeVariants(ex?.variants, ex?.variant);
   let name = ex?.family && ex?.variant ? ex.family : ex.name;
   if (exerciseNameKey(name) === 'alzate laterali (drop set)') name = 'Alzate laterali';
+  const legacyParentId = LEGACY_BASE_PARENT_IDS.get(ex?.id);
+  const baseExercise = BASE_EXERCISE_LIBRARY.find(base =>
+    base.id === legacyParentId || exerciseNameKey(base.name) === exerciseNameKey(name)
+  );
+  const parentId = ex?.parentId || legacyParentId || baseExercise?.id || ex.id;
+  if (legacyParentId && baseExercise) name = baseExercise.name;
   const selectedVariant = variants.includes(ex?.selectedVariant)
     ? ex.selectedVariant
     : (variants[0] || '');
   return {
-    id: ex.id,
+    id: ex.id || parentId,
+    parentId,
     name,
     variants,
     selectedVariant,
@@ -377,9 +420,10 @@ function normalizeVariants(variants, legacyVariant = '') {
 function cloneExerciseWithKnownVariants(exercise) {
   const cloned = cloneExercise(exercise);
   const knownExercise = state.exerciseLibrary.find(item =>
-    item.id === cloned.id || exerciseNameKey(item.name) === exerciseNameKey(cloned.name)
-  ) || BASE_EXERCISE_LIBRARY.find(item =>
+    exerciseParentId(item) === cloned.parentId ||
     exerciseNameKey(item.name) === exerciseNameKey(cloned.name)
+  ) || BASE_EXERCISE_LIBRARY.find(item =>
+    item.id === cloned.parentId || exerciseNameKey(item.name) === exerciseNameKey(cloned.name)
   );
   return knownExercise ? mergeExerciseVariants(cloned, knownExercise) : cloned;
 }
@@ -396,34 +440,16 @@ function mergeExerciseVariants(target, source) {
   return target;
 }
 
-function normalizeProgramExercises(program) {
-  const normalized = program && typeof program === 'object'
-    ? program
-    : JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
+function normalizeProgramExercises(program, deletedParents = new Set()) {
+  const source = program && typeof program === 'object' ? program : DEFAULT_PROGRAM;
+  const normalized = JSON.parse(JSON.stringify(source));
 
   for (const dayKey of [...LIBRARY_DAYS, 'free']) {
     const day = normalized[dayKey];
     if (!day || !Array.isArray(day.exercises)) continue;
-    const byName = new Map();
-    const exercises = [];
-
-    for (const rawExercise of day.exercises) {
-      const exercise = cloneExercise(rawExercise);
-      const baseExercise = BASE_EXERCISE_LIBRARY.find(base =>
-        exerciseNameKey(base.name) === exerciseNameKey(exercise.name)
-      );
-      if (baseExercise) mergeExerciseVariants(exercise, baseExercise);
-
-      const key = exerciseNameKey(exercise.name);
-      const existing = byName.get(key);
-      if (existing && (LEGACY_BASE_EXERCISE_IDS.has(rawExercise.id) || baseExercise)) {
-        mergeExerciseVariants(existing, exercise);
-        continue;
-      }
-      byName.set(key, exercise);
-      exercises.push(exercise);
-    }
-    day.exercises = exercises;
+    day.exercises = day.exercises
+      .map(cloneExercise)
+      .filter(exercise => !deletedParents.has(exercise.parentId));
   }
   return normalized;
 }
@@ -433,31 +459,46 @@ function initialExercisesForDay(day) {
   return (state.program?.[day]?.exercises || []).map(cloneExercise);
 }
 
-function normalizeExerciseLibrary(storedLibrary, program) {
-  const byName = new Map();
-  const addExercise = (rawExercise) => {
+function normalizeExerciseLibrary(storedLibrary, program, options = {}) {
+  const deletedParents = options.deletedParents || new Set();
+  const migrateDefaults = Boolean(options.migrateDefaults);
+  const byParent = new Map();
+  const addExercise = (rawExercise, mergeVariants = false) => {
     const exercise = cloneExercise(rawExercise);
-    const key = exerciseNameKey(exercise.name);
-    const existing = byName.get(key);
+    if (deletedParents.has(exercise.parentId)) return;
+    const existing = byParent.get(exercise.parentId);
     if (existing) {
-      mergeExerciseVariants(existing, exercise);
+      if (mergeVariants) mergeExerciseVariants(existing, exercise);
       return;
     }
-    byName.set(key, exercise);
+    exercise.id = exercise.parentId;
+    byParent.set(exercise.parentId, exercise);
   };
 
   if (Array.isArray(storedLibrary)) {
-    for (const ex of storedLibrary) {
-      if (ex?.id && !LEGACY_BASE_EXERCISE_IDS.has(ex.id)) addExercise(ex);
-    }
+    for (const ex of storedLibrary) if (ex?.id) addExercise(ex, true);
   }
   for (const dayKey of LIBRARY_DAYS) {
     for (const ex of program?.[dayKey]?.exercises || []) {
-      addExercise({ ...ex, sourceDay: ex.sourceDay || dayKey });
+      addExercise({ ...ex, sourceDay: ex.sourceDay || dayKey }, migrateDefaults);
     }
   }
-  for (const ex of BASE_EXERCISE_LIBRARY) addExercise(ex);
-  return [...byName.values()];
+  for (const ex of BASE_EXERCISE_LIBRARY) addExercise(ex, migrateDefaults);
+  return [...byParent.values()];
+}
+
+function syncProgramVariantsFromLibrary(program, library) {
+  const variantsByParent = new Map(library.map(ex => [ex.parentId, ex.variants]));
+  for (const dayKey of [...LIBRARY_DAYS, 'free']) {
+    for (const exercise of program?.[dayKey]?.exercises || []) {
+      const variants = variantsByParent.get(exercise.parentId);
+      if (!variants) continue;
+      exercise.variants = [...variants];
+      if (!exercise.variants.includes(exercise.selectedVariant)) {
+        exercise.selectedVariant = exercise.variants[0] || '';
+      }
+    }
+  }
 }
 
 function selectedExerciseVariant(ex) {
@@ -470,6 +511,10 @@ function selectedExerciseVariant(ex) {
 function exerciseDisplayName(ex, includeVariant = true) {
   const variant = selectedExerciseVariant(ex);
   return includeVariant && variant ? `${ex.name} · ${variant}` : ex.name;
+}
+
+function exerciseParentId(ex) {
+  return ex?.parentId || ex?.id || '';
 }
 
 function ensureDaySession(day) {
@@ -676,7 +721,7 @@ function exerciseCard(ex, idx) {
         <div class="ex-title">${esc(exerciseDisplayName(ex, false))}</div>
         <div class="ex-sub">${activeVariant ? `<b>${esc(activeVariant)}</b> · ` : ''}${ex.sets}x${esc(ex.reps)} · rec ${ex.rest}s · ${esc(ex.target)}</div>
       </div>
-      <span class="ex-sub" style="font-family:'JetBrains Mono',monospace;color:${doneCount===sessSets.length && doneCount>0?'var(--accent)':'var(--text-dimmer)'};">${doneCount}/${sessSets.length}</span>
+      <span class="ex-sub ex-progress" style="font-family:'JetBrains Mono',monospace;color:${doneCount===sessSets.length && doneCount>0?'var(--accent)':'var(--text-dimmer)'};">${doneCount}/${sessSets.length}</span>
       <span class="ex-chevron">▸</span>
     </div>
     <div class="ex-body">
@@ -706,19 +751,19 @@ function exerciseCard(ex, idx) {
         </div>
         ${sessSets.map((s, i) => `
           <div class="set-block" data-set="${i}">
-            <div class="set-row ${s.done?'done':''}">
+            <div class="set-row ${isCompletedSet(s)?'done':''}">
               <div class="set-num">${i+1}</div>
-              <input class="set-input" data-field="w" type="number" inputmode="decimal" step="0.5" value="${s.w ?? ''}" placeholder="—">
-              <input class="set-input" data-field="r" type="number" inputmode="numeric" value="${s.r ?? ''}" placeholder="—">
+              <input class="set-input" data-field="w" type="number" inputmode="decimal" min="0" step="0.5" value="${s.w ?? ''}" placeholder="—">
+              <input class="set-input" data-field="r" type="number" inputmode="numeric" min="1" step="1" value="${s.r ?? ''}" placeholder="—">
               <div class="set-hint">${esc(ex.reps)}</div>
-              <button class="set-check" data-action="toggle" aria-label="Completa serie ${i+1}">${s.done?'✓':''}</button>
+              <button class="set-check" data-action="toggle" aria-label="Completa serie ${i+1}">${isCompletedSet(s)?'✓':''}</button>
             </div>
             <div class="drop-zone">
               ${s.drops.map((drop, dropIdx) => `
                 <div class="drop-row" data-drop="${dropIdx}">
                   <span>Drop ${dropIdx + 1}</span>
-                  <input class="drop-input" data-field="w" type="number" inputmode="decimal" step="0.5" value="${drop.w ?? ''}" placeholder="Kg">
-                  <input class="drop-input" data-field="r" type="number" inputmode="numeric" value="${drop.r ?? ''}" placeholder="Reps">
+                  <input class="drop-input" data-field="w" type="number" inputmode="decimal" min="0" step="0.5" value="${drop.w ?? ''}" placeholder="Kg">
+                  <input class="drop-input" data-field="r" type="number" inputmode="numeric" min="1" step="1" value="${drop.r ?? ''}" placeholder="Reps">
                   <button class="drop-remove" aria-label="Rimuovi drop ${dropIdx + 1}">×</button>
                 </div>
               `).join('')}
@@ -748,11 +793,41 @@ function exerciseCard(ex, idx) {
   const variantSelect = card.querySelector('[data-action="variant"]');
   if (variantSelect) {
     variantSelect.addEventListener('change', () => {
+      if (variantSelect.value === activeVariant) return;
+      if (sessSets.some(hasSetEntry)) {
+        const shouldReset = confirm('Cambiare variante cancellerà le serie già inserite per questo esercizio. Continuare?');
+        if (!shouldReset) {
+          variantSelect.value = activeVariant;
+          return;
+        }
+        state.session.sets[ex.id] = initSets(ex.sets);
+        if (state.timer.exId === ex.id) stopTimer();
+      }
       ex.selectedVariant = variantSelect.value;
       saveSession();
       render();
     });
   }
+
+  const refreshCompletionUi = () => {
+    const completed = sessSets.filter(isCompletedSet).length;
+    const progress = card.querySelector('.ex-progress');
+    if (progress) {
+      progress.textContent = `${completed}/${sessSets.length}`;
+      progress.style.color = completed === sessSets.length && completed > 0
+        ? 'var(--accent)'
+        : 'var(--text-dimmer)';
+    }
+    card.classList.toggle('complete', completed === sessSets.length && completed > 0);
+  };
+
+  const markSetDirty = (set, row) => {
+    if (!set.done) return;
+    set.done = false;
+    row.classList.remove('done');
+    row.querySelector('[data-action="toggle"]').textContent = '';
+    refreshCompletionUi();
+  };
 
   card.querySelectorAll('.set-block').forEach(block => {
     const setIdx = parseInt(block.dataset.set);
@@ -762,10 +837,15 @@ function exerciseCard(ex, idx) {
         const field = e.target.dataset.field;
         const val = e.target.value === '' ? null : parseFloat(e.target.value);
         sessSets[setIdx][field] = isNaN(val) ? null : val;
+        markSetDirty(sessSets[setIdx], row);
         saveSession();
       });
     });
     row.querySelector('[data-action="toggle"]').addEventListener('click', () => {
+      if (!sessSets[setIdx].done && !hasCompleteSetData(sessSets[setIdx])) {
+        showToast('Inserisci kg e reps per tutta la serie');
+        return;
+      }
       sessSets[setIdx].done = !sessSets[setIdx].done;
       if (sessSets[setIdx].done) {
         unlockTimerAudio();
@@ -781,11 +861,13 @@ function exerciseCard(ex, idx) {
           const field = e.target.dataset.field;
           const val = e.target.value === '' ? null : parseFloat(e.target.value);
           sessSets[setIdx].drops[dropIdx][field] = isNaN(val) ? null : val;
+          markSetDirty(sessSets[setIdx], row);
           saveSession();
         });
       });
       dropRow.querySelector('.drop-remove').addEventListener('click', () => {
         sessSets[setIdx].drops.splice(dropIdx, 1);
+        markSetDirty(sessSets[setIdx], row);
         saveSession();
         render();
       });
@@ -832,14 +914,16 @@ function emptySet() {
 }
 
 function normalizeSet(set) {
-  return {
+  const normalized = {
     w: set?.w ?? null,
     r: set?.r ?? null,
-    done: Boolean(set?.done),
+    done: false,
     drops: Array.isArray(set?.drops)
       ? set.drops.map(drop => ({ w:drop?.w ?? null, r:drop?.r ?? null }))
       : []
   };
+  normalized.done = Boolean(set?.done && hasCompleteSetData(normalized));
+  return normalized;
 }
 
 function toggleExpand(id) {
@@ -973,21 +1057,33 @@ function hasNumericValue(value) {
   return value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
 }
 
-function isCompletedSet(set) {
+function hasValidWeight(value) {
+  return hasNumericValue(value) && Number(value) >= 0;
+}
+
+function hasValidReps(value) {
+  return hasNumericValue(value) && Number(value) > 0;
+}
+
+function hasCompleteSetData(set) {
   return Boolean(
-    set && set.done && hasNumericValue(set.w) && hasNumericValue(set.r) &&
+    set && hasValidWeight(set.w) && hasValidReps(set.r) &&
     (!Array.isArray(set.drops) || set.drops.every(drop =>
-      hasNumericValue(drop?.w) && hasNumericValue(drop?.r)
+      hasValidWeight(drop?.w) && hasValidReps(drop?.r)
     ))
   );
 }
 
+function isCompletedSet(set) {
+  return Boolean(set?.done && hasCompleteSetData(set));
+}
+
 function setVolume(set) {
-  const main = hasNumericValue(set?.w) && hasNumericValue(set?.r)
+  const main = hasValidWeight(set?.w) && hasValidReps(set?.r)
     ? Number(set.w) * Number(set.r)
     : 0;
   const drops = (set?.drops || []).reduce((total, drop) => {
-    if (!hasNumericValue(drop?.w) || !hasNumericValue(drop?.r)) return total;
+    if (!hasValidWeight(drop?.w) || !hasValidReps(drop?.r)) return total;
     return total + Number(drop.w) * Number(drop.r);
   }, 0);
   return main + drops;
@@ -996,7 +1092,7 @@ function setVolume(set) {
 function formatSetSummary(set) {
   const parts = [`${set.w}×${set.r}`];
   for (const drop of set.drops || []) {
-    if (hasNumericValue(drop.w) && hasNumericValue(drop.r)) {
+    if (hasValidWeight(drop.w) && hasValidReps(drop.r)) {
       parts.push(`${drop.w}×${drop.r}`);
     }
   }
@@ -1015,6 +1111,7 @@ async function saveProgram() {
 
 async function saveExerciseLibrary() {
   await storageSet(KEYS.LIBRARY, state.exerciseLibrary);
+  await storageSet(KEYS.DELETED_EXERCISES, [...state.deletedExerciseParents]);
 }
 
 async function finishDay() {
@@ -1097,7 +1194,7 @@ function renderExerciseLibrary() {
   const targetExercises = state.libraryMode === 'program'
     ? state.program[state.programDay].exercises
     : state.session.exercises;
-  const existingIds = new Set((targetExercises || []).map(ex => ex.id));
+  const existingParents = new Set((targetExercises || []).map(exerciseParentId));
   const library = savedExerciseLibrary().filter(ex => {
     if (!query) return true;
     return `${ex.name} ${(ex.variants || []).join(' ')} ${ex.target} ${LIBRARY_DAY_LABELS[ex.sourceDay] || ''}`
@@ -1109,7 +1206,7 @@ function renderExerciseLibrary() {
     container.innerHTML = '<div class="library-empty">Nessun esercizio trovato.</div>';
   } else {
     container.innerHTML = library.map(ex => {
-      const alreadyAdded = existingIds.has(ex.id);
+      const alreadyAdded = existingParents.has(exerciseParentId(ex));
       const selected = state.librarySelection.has(ex.id);
       return `
         <label class="library-item ${alreadyAdded ? 'disabled' : ''} ${selected ? 'selected' : ''}">
@@ -1148,9 +1245,9 @@ async function addSelectedExercises() {
   const targetExercises = state.libraryMode === 'program'
     ? state.program[state.programDay].exercises
     : state.session.exercises;
-  const existingIds = new Set((targetExercises || []).map(ex => ex.id));
+  const existingParents = new Set((targetExercises || []).map(exerciseParentId));
   const chosen = savedExerciseLibrary()
-    .filter(ex => state.librarySelection.has(ex.id) && !existingIds.has(ex.id))
+    .filter(ex => state.librarySelection.has(ex.id) && !existingParents.has(exerciseParentId(ex)))
     .map(cloneExercise);
 
   if (state.libraryMode === 'program') {
@@ -1209,9 +1306,12 @@ async function moveTemplateExercise(exId, offset) {
 function openEdit(exId, programDay = state.programDay) {
   state.editingExerciseId = exId;
   state.editingProgramDay = programDay;
-  const ex = state.exerciseLibrary.find(e => e.id === exId)
-    || state.program[programDay].exercises.find(e => e.id === exId);
+  const templateExercise = state.program[programDay].exercises.find(e => e.id === exId);
+  const parentId = exerciseParentId(templateExercise) || exId;
+  const ex = templateExercise
+    || state.exerciseLibrary.find(e => exerciseParentId(e) === parentId);
   if (!ex) return;
+  state.editingParentId = parentId;
   document.getElementById('editTitle').textContent = 'Modifica · ' + exerciseDisplayName(ex, false);
   document.getElementById('ed-name').value = ex.name;
   document.getElementById('ed-variants').value = (ex.variants || []).join('\n');
@@ -1227,6 +1327,7 @@ function openEdit(exId, programDay = state.programDay) {
 
 function openAdd(programDay = state.programDay) {
   state.editingExerciseId = null;
+  state.editingParentId = null;
   state.editingProgramDay = programDay;
   document.getElementById('editTitle').textContent = 'Nuovo esercizio';
   document.getElementById('ed-name').value = '';
@@ -1244,6 +1345,7 @@ function openAdd(programDay = state.programDay) {
 function closeEdit() {
   document.getElementById('editModal').classList.remove('active');
   state.editingExerciseId = null;
+  state.editingParentId = null;
   state.editingProgramDay = null;
 }
 
@@ -1251,6 +1353,7 @@ async function saveEdit() {
   const dayKey = state.editingProgramDay || state.programDay;
   const day = state.program[dayKey];
   const editingId = state.editingExerciseId;
+  const editingParentId = state.editingParentId;
   const wasEditing = Boolean(editingId);
   const data = {
     name: document.getElementById('ed-name').value.trim() || 'Esercizio',
@@ -1264,18 +1367,35 @@ async function saveEdit() {
   };
   data.selectedVariant = data.variants[0] || '';
   if (wasEditing) {
-    const ex = state.exerciseLibrary.find(e => e.id === editingId);
+    const ex = state.exerciseLibrary.find(e => exerciseParentId(e) === editingParentId);
     if (!ex) return;
-    Object.assign(ex, data);
+    Object.assign(ex, data, { id:editingParentId, parentId:editingParentId });
+    const sharedData = {
+      name: data.name,
+      variants: [...data.variants],
+      selectedVariant: data.selectedVariant,
+      target: data.target,
+      cue: data.cue,
+      video: data.video
+    };
     for (const programDay of LIBRARY_DAYS) {
-      const templateExercise = state.program[programDay]?.exercises.find(item => item.id === editingId);
-      if (templateExercise) Object.assign(templateExercise, data);
+      for (const templateExercise of state.program[programDay]?.exercises || []) {
+        if (exerciseParentId(templateExercise) !== editingParentId) continue;
+        Object.assign(templateExercise, sharedData);
+        if (programDay === dayKey && templateExercise.id === editingId) {
+          Object.assign(templateExercise, data);
+        }
+      }
     }
   } else {
     const newId = 'u' + Date.now();
-    const newExercise = { id:newId, ...data, sourceDay: dayKey };
-    state.exerciseLibrary.push(cloneExercise(newExercise));
-    day.exercises.push(cloneExercise(newExercise));
+    const newExercise = cloneExercise({ id:newId, ...data, sourceDay: dayKey });
+    state.deletedExerciseParents.delete(newExercise.parentId);
+    state.exerciseLibrary = state.exerciseLibrary.filter(item =>
+      exerciseParentId(item) !== newExercise.parentId
+    );
+    state.exerciseLibrary.push({ ...cloneExercise(newExercise), id:newExercise.parentId });
+    day.exercises.push(newExercise);
   }
   await saveExerciseLibrary();
   await saveProgram();
@@ -1285,13 +1405,18 @@ async function saveEdit() {
 }
 
 async function deleteExercise(exId) {
-  const ex = state.exerciseLibrary.find(e => e.id === exId);
+  const templateExercise = state.program[state.editingProgramDay || state.programDay]?.exercises
+    .find(item => item.id === exId);
+  const parentId = state.editingParentId || exerciseParentId(templateExercise) || exId;
+  const ex = state.exerciseLibrary.find(e => exerciseParentId(e) === parentId);
   if (!ex) return;
   if (!confirm(`Eliminare definitivamente "${exerciseDisplayName(ex)}" dagli esercizi salvati e da tutti gli stati iniziali?`)) return;
-  state.exerciseLibrary = state.exerciseLibrary.filter(item => item.id !== exId);
+  state.deletedExerciseParents.add(parentId);
+  state.exerciseLibrary = state.exerciseLibrary.filter(item => exerciseParentId(item) !== parentId);
   for (const dayKey of LIBRARY_DAYS) {
     if (state.program[dayKey]) {
-      state.program[dayKey].exercises = state.program[dayKey].exercises.filter(item => item.id !== exId);
+      state.program[dayKey].exercises = state.program[dayKey].exercises
+        .filter(item => exerciseParentId(item) !== parentId);
     }
   }
   state.expanded.delete(exId);

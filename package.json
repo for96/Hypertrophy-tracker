@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --host",
-    "icons": "node scripts/generate-icons.js"
+    "icons": "node scripts/generate-icons.js",
+    "test": "node scripts/test-core.cjs"
   },
   "devDependencies": {
     "sharp": "^0.33.5",
