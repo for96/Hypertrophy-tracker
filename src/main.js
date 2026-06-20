@@ -147,6 +147,55 @@ const DEFAULT_PROGRAM = {
   }
 };
 
+/* Esercizi sempre disponibili nella libreria, anche per installazioni esistenti. */
+const BASE_EXERCISE_LIBRARY = [
+  { id:'base-squat-barbell', family:'Squat', variant:'Bilanciere', name:'Squat', target:'Quadricipiti, glutei, core', sets:4, reps:'6-10', rest:150, cue:'Schiena neutra, ginocchia in linea con i piedi, spingi il pavimento.', video:'barbell back squat tecnica' },
+  { id:'base-front-squat', family:'Squat', variant:'Front squat', name:'Squat', target:'Quadricipiti, core', sets:4, reps:'6-10', rest:150, cue:'Gomiti alti e busto verticale per tutta la discesa.', video:'front squat tecnica' },
+  { id:'base-rdl', family:'Stacco', variant:'Rumeno', name:'Stacco', target:'Femorali, glutei, erettori spinali', sets:4, reps:'8-12', rest:120, cue:'Anche indietro, bilanciere vicino alle gambe, fermati quando perdi tensione.', video:'romanian deadlift tecnica' },
+  { id:'base-deadlift', family:'Stacco', variant:'Convenzionale', name:'Stacco', target:'Catena posteriore, dorso, core', sets:3, reps:'4-6', rest:180, cue:'Crea tensione prima di partire e spingi il pavimento senza strappare.', video:'stacco da terra convenzionale tecnica' },
+  { id:'base-hip-thrust', family:'Hip thrust', variant:'Bilanciere', name:'Hip thrust', target:'Glutei', sets:4, reps:'8-12', rest:120, cue:'Mentone leggermente chiuso, bacino in retroversione al picco.', video:'hip thrust bilanciere tecnica' },
+  { id:'base-lunges-db', family:'Affondi', variant:'Manubri', name:'Affondi', target:'Quadricipiti, glutei', sets:3, reps:'8-12 per lato', rest:90, cue:'Passo stabile e ginocchio in linea con il piede.', video:'affondi manubri tecnica' },
+  { id:'base-bulgarian', family:'Squat unilaterale', variant:'Bulgaro', name:'Bulgarian split squat', target:'Quadricipiti, glutei', sets:3, reps:'8-12 per lato', rest:90, cue:'Carica la gamba davanti e mantieni il bacino stabile.', video:'bulgarian split squat tecnica' },
+  { id:'base-leg-curl-seated', family:'Leg curl', variant:'Seduto', name:'Leg curl', target:'Femorali', sets:3, reps:'10-15', rest:75, cue:'Bacino fermo e chiusura completa senza slancio.', video:'seated leg curl tecnica' },
+  { id:'base-calf-seated', family:'Calf raise', variant:'Seduto', name:'Calf raise', target:'Soleo, polpacci', sets:4, reps:'12-20', rest:60, cue:'Pausa in massimo allungamento e massima contrazione.', video:'seated calf raise tecnica' },
+  { id:'base-adductor', family:'Adduzioni', variant:'Macchina', name:'Adductor machine', target:'Adduttori', sets:3, reps:'12-20', rest:60, cue:'Movimento controllato, senza rimbalzo in apertura.', video:'adductor machine tecnica' },
+
+  { id:'base-pullup', family:'Trazioni', variant:'Presa prona', name:'Trazioni', target:'Gran dorsale, bicipiti', sets:4, reps:'6-10', rest:120, cue:'Parti con scapole attive e porta il petto verso la sbarra.', video:'trazioni presa prona tecnica' },
+  { id:'base-chinup', family:'Trazioni', variant:'Presa supina', name:'Trazioni', target:'Dorso, bicipiti', sets:4, reps:'6-10', rest:120, cue:'Evita lo slancio e completa la discesa in controllo.', video:'chin up presa supina tecnica' },
+  { id:'base-row-barbell', family:'Rematore', variant:'Bilanciere', name:'Rematore', target:'Dorso, romboidi, bicipiti', sets:4, reps:'6-10', rest:120, cue:'Busto stabile e gomiti verso il retro, senza strattoni.', video:'rematore bilanciere tecnica' },
+  { id:'base-row-db', family:'Rematore', variant:'Manubrio', name:'Rematore', target:'Gran dorsale, mid-back', sets:3, reps:'8-12 per lato', rest:90, cue:'Spalla lontana dall’orecchio e gomito verso l’anca.', video:'rematore manubrio tecnica' },
+  { id:'base-row-tbar', family:'Rematore', variant:'T-bar', name:'Rematore', target:'Dorso, romboidi', sets:4, reps:'8-12', rest:120, cue:'Mantieni il petto stabile e chiudi le scapole.', video:'t bar row tecnica' },
+  { id:'base-lat-neutral', family:'Lat machine', variant:'Presa neutra', name:'Lat machine', target:'Gran dorsale, bicipiti', sets:4, reps:'8-12', rest:90, cue:'Tira i gomiti verso i fianchi senza arretrare col busto.', video:'lat pulldown neutral grip tecnica' },
+  { id:'base-lat-wide', family:'Lat machine', variant:'Presa larga', name:'Lat machine', target:'Gran dorsale, upper back', sets:3, reps:'10-12', rest:90, cue:'Petto alto e scapole depresse prima della tirata.', video:'wide grip lat pulldown tecnica' },
+  { id:'base-seated-row-neutral', family:'Pulley', variant:'Presa neutra', name:'Pulley basso', target:'Dorso, romboidi', sets:3, reps:'10-15', rest:90, cue:'Non oscillare con il busto; chiudi i gomiti dietro.', video:'seated cable row neutral grip tecnica' },
+
+  { id:'base-bench-db', family:'Panca piana', variant:'Manubri', name:'Panca piana', target:'Pettorali, tricipiti', sets:4, reps:'8-12', rest:120, cue:'Scapole addotte e traiettoria stabile dei manubri.', video:'dumbbell bench press tecnica' },
+  { id:'base-incline-barbell', family:'Panca inclinata', variant:'Bilanciere', name:'Panca inclinata', target:'Pettorale alto, tricipiti', sets:4, reps:'6-10', rest:120, cue:'Panca moderatamente inclinata e scapole ferme.', video:'incline barbell bench press tecnica' },
+  { id:'base-dips-chest', family:'Dip', variant:'Focus petto', name:'Dip alle parallele', target:'Pettorali, tricipiti', sets:3, reps:'6-12', rest:120, cue:'Busto leggermente avanti e discesa controllata.', video:'chest dips tecnica' },
+  { id:'base-cable-fly-high', family:'Croci ai cavi', variant:'Dall’alto', name:'Croci ai cavi', target:'Pettorali', sets:3, reps:'12-15', rest:60, cue:'Gomiti morbidi e traiettoria ad arco verso il basso.', video:'high to low cable fly tecnica' },
+  { id:'base-cable-fly-low', family:'Croci ai cavi', variant:'Dal basso', name:'Croci ai cavi', target:'Pettorale alto', sets:3, reps:'12-15', rest:60, cue:'Porta le mani in alto e al centro senza alzare le spalle.', video:'low to high cable fly tecnica' },
+  { id:'base-pushup', family:'Piegamenti', variant:'Corpo libero', name:'Piegamenti', target:'Pettorali, tricipiti, core', sets:3, reps:'AMRAP tecnico', rest:75, cue:'Corpo in linea e petto verso il pavimento.', video:'push up tecnica corretta' },
+
+  { id:'base-ohp-barbell', family:'Shoulder press', variant:'Bilanciere', name:'Military press', target:'Deltoidi, tricipiti', sets:4, reps:'6-10', rest:120, cue:'Glutei e addome attivi, bilanciere vicino al viso.', video:'military press bilanciere tecnica' },
+  { id:'base-arnold-press', family:'Shoulder press', variant:'Arnold', name:'Arnold press', target:'Deltoidi anteriori e laterali', sets:3, reps:'8-12', rest:90, cue:'Rotazione fluida senza perdere controllo delle scapole.', video:'arnold press tecnica' },
+  { id:'base-lateral-db', family:'Alzate laterali', variant:'Manubri', name:'Alzate laterali', target:'Deltoide laterale', sets:4, reps:'12-20', rest:60, cue:'Guida coi gomiti e limita lo slancio.', video:'alzate laterali manubri tecnica' },
+  { id:'base-lateral-cable', family:'Alzate laterali', variant:'Cavo basso', name:'Alzate laterali', target:'Deltoide laterale', sets:4, reps:'12-20', rest:60, cue:'Mantieni tensione continua e polso neutro.', video:'cable lateral raise tecnica' },
+  { id:'base-lateral-ankle', family:'Alzate laterali', variant:'Cavigliera al cavo', name:'Alzate laterali', target:'Deltoide laterale', sets:3, reps:'12-20', rest:60, cue:'Cavo fissato all’avambraccio per ridurre il limite della presa.', video:'cable cuff lateral raise tecnica' },
+  { id:'base-lateral-multiflight', family:'Alzate laterali', variant:'Multi flight', name:'Alzate laterali', target:'Deltoide laterale', sets:4, reps:'10-15', rest:60, cue:'Regola il sedile per allineare il perno alla spalla.', video:'lateral raise machine tecnica' },
+  { id:'base-rear-delt-machine', family:'Deltoide posteriore', variant:'Reverse pec deck', name:'Reverse pec deck', target:'Deltoide posteriore, romboidi', sets:4, reps:'12-20', rest:60, cue:'Petto appoggiato e braccia aperte senza compensare col trapezio.', video:'reverse pec deck rear delt tecnica' },
+
+  { id:'base-curl-ez', family:'Curl', variant:'Bilanciere EZ', name:'Curl', target:'Bicipiti', sets:4, reps:'8-12', rest:75, cue:'Gomiti fermi e discesa completa in controllo.', video:'ez bar curl tecnica' },
+  { id:'base-preacher-curl', family:'Curl', variant:'Panca Scott', name:'Curl', target:'Bicipiti, brachiale', sets:3, reps:'10-15', rest:75, cue:'Non iperestendere il gomito in basso.', video:'preacher curl tecnica' },
+  { id:'base-incline-curl', family:'Curl', variant:'Manubri su inclinata', name:'Curl', target:'Bicipite capo lungo', sets:3, reps:'10-15', rest:75, cue:'Spalle ferme dietro il busto e supinazione completa.', video:'incline dumbbell curl tecnica' },
+  { id:'base-overhead-triceps', family:'Estensioni tricipiti', variant:'Cavo sopra la testa', name:'Estensioni tricipiti', target:'Tricipite capo lungo', sets:3, reps:'10-15', rest:75, cue:'Gomiti stretti e allungamento completo dietro la testa.', video:'overhead cable triceps extension tecnica' },
+  { id:'base-skullcrusher', family:'French press', variant:'Bilanciere EZ', name:'French press', target:'Tricipiti', sets:3, reps:'8-12', rest:90, cue:'Gomiti stabili e bilanciere dietro la fronte.', video:'ez bar skull crusher tecnica' },
+  { id:'base-close-grip-bench', family:'Panca piana', variant:'Presa stretta', name:'Panca presa stretta', target:'Tricipiti, pettorali', sets:4, reps:'6-10', rest:120, cue:'Presa poco più stretta delle spalle e gomiti controllati.', video:'close grip bench press tecnica' },
+
+  { id:'base-cable-crunch', family:'Addome', variant:'Crunch al cavo', name:'Crunch al cavo', target:'Retto addominale', sets:3, reps:'12-20', rest:60, cue:'Fletti il busto con l’addome senza tirare con le braccia.', video:'cable crunch tecnica' },
+  { id:'base-hanging-raise', family:'Addome', variant:'Sollevamento gambe', name:'Leg raise alla sbarra', target:'Addome, flessori anca', sets:3, reps:'8-15', rest:60, cue:'Evita lo slancio e chiudi il bacino verso le costole.', video:'hanging leg raise tecnica' },
+  { id:'base-plank', family:'Core', variant:'Plank', name:'Plank', target:'Core', sets:3, reps:'30-60 sec', rest:60, cue:'Glutei stretti e bacino neutro.', video:'plank tecnica corretta' }
+];
+
 const DAYS_ORDER = ['lun','mer','ven','free'];
 const LIBRARY_DAYS = ['lun','mer','ven','extra'];
 const LIBRARY_DAY_LABELS = {
@@ -171,7 +220,7 @@ let state = {
   editingProgramDay: null,
   libraryMode: 'session',
   librarySelection: new Set(),
-  timer: { remaining: 0, total: 0, intervalId: null, exId: null }
+  timer: { remaining: 0, total: 0, intervalId: null, exId: null, audioContext: null }
 };
 
 /* ============== STORAGE LAYER (localStorage) ============== */
@@ -302,6 +351,8 @@ function cloneExercise(ex) {
   return {
     id: ex.id,
     name: ex.name,
+    family: ex.family || '',
+    variant: ex.variant || '',
     target: ex.target || '',
     sets: Math.max(1, Number(ex.sets) || 3),
     reps: ex.reps || '8-12',
@@ -331,7 +382,14 @@ function normalizeExerciseLibrary(storedLibrary, program) {
       }
     }
   }
+  for (const ex of BASE_EXERCISE_LIBRARY) {
+    if (!byId.has(ex.id)) byId.set(ex.id, cloneExercise(ex));
+  }
   return [...byId.values()];
+}
+
+function exerciseDisplayName(ex) {
+  return ex.variant ? `${ex.name} · ${ex.variant}` : ex.name;
 }
 
 function ensureDaySession(day) {
@@ -494,7 +552,7 @@ function renderProgram() {
     <div class="program-exercise" data-id="${esc(ex.id)}">
       <span class="ex-num">${String(idx + 1).padStart(2, '0')}</span>
       <div class="program-exercise-main">
-        <strong>${esc(ex.name)}</strong>
+        <strong>${esc(exerciseDisplayName(ex))}</strong>
         <span>${ex.sets}x${esc(ex.reps)} · rec ${ex.rest}s · ${esc(ex.target)}</span>
       </div>
       <div class="program-exercise-actions">
@@ -521,9 +579,9 @@ function exerciseCard(ex, idx) {
   card.dataset.id = ex.id;
   if (state.expanded.has(ex.id)) card.classList.add('expanded');
 
-  const sessSets = state.session.sets[ex.id] || initSets(ex.sets);
+  const sessSets = (state.session.sets[ex.id] || initSets(ex.sets)).map(normalizeSet);
   state.session.sets[ex.id] = sessSets;
-  const doneCount = sessSets.filter(s => s.done).length;
+  const doneCount = sessSets.filter(isCompletedSet).length;
   if (doneCount === sessSets.length && sessSets.length > 0) card.classList.add('complete');
 
   const last = findLastSessionFor(ex.id);
@@ -532,7 +590,7 @@ function exerciseCard(ex, idx) {
     <div class="ex-head">
       <span class="ex-num">${String(idx+1).padStart(2,'0')}</span>
       <div class="ex-title-wrap">
-        <div class="ex-title">${esc(ex.name)}</div>
+        <div class="ex-title">${esc(exerciseDisplayName(ex))}</div>
         <div class="ex-sub"><b>${ex.sets}x${esc(ex.reps)}</b> · rec <b>${ex.rest}s</b> · ${esc(ex.target)}</div>
       </div>
       <span class="ex-sub" style="font-family:'JetBrains Mono',monospace;color:${doneCount===sessSets.length && doneCount>0?'var(--accent)':'var(--text-dimmer)'};">${doneCount}/${sessSets.length}</span>
@@ -546,7 +604,7 @@ function exerciseCard(ex, idx) {
       <a class="video-link" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(ex.video)}">
         Guarda su YouTube · ${esc(ex.video)}
       </a>
-      ${last ? `<div class="history-line">Ultima volta (${fmtDate(last.date)}): <b>${last.summary}</b> <span class="pr" style="margin-left: 8px;">★ Migliore: ${last.top.w}×${last.top.r}</span></div>` : ''}
+      ${last ? `<div class="history-line">Ultima volta (${fmtDate(last.date)}): <b>${last.summary}</b> <span class="pr" style="margin-left: 8px;">★ Migliore: ${last.topSummary}</span></div>` : ''}
       <div class="sets-wrap">
         <div class="sets-header">
           <div>Set</div>
@@ -556,12 +614,25 @@ function exerciseCard(ex, idx) {
           <div>OK</div>
         </div>
         ${sessSets.map((s, i) => `
-          <div class="set-row ${s.done?'done':''}" data-set="${i}">
-            <div class="set-num">${i+1}</div>
-            <input class="set-input" data-field="w" type="number" inputmode="decimal" step="0.5" value="${s.w ?? ''}" placeholder="—">
-            <input class="set-input" data-field="r" type="number" inputmode="numeric" value="${s.r ?? ''}" placeholder="—">
-            <div class="set-hint">${esc(ex.reps)}</div>
-            <button class="set-check" data-action="toggle">${s.done?'✓':''}</button>
+          <div class="set-block" data-set="${i}">
+            <div class="set-row ${s.done?'done':''}">
+              <div class="set-num">${i+1}</div>
+              <input class="set-input" data-field="w" type="number" inputmode="decimal" step="0.5" value="${s.w ?? ''}" placeholder="—">
+              <input class="set-input" data-field="r" type="number" inputmode="numeric" value="${s.r ?? ''}" placeholder="—">
+              <div class="set-hint">${esc(ex.reps)}</div>
+              <button class="set-check" data-action="toggle" aria-label="Completa serie ${i+1}">${s.done?'✓':''}</button>
+            </div>
+            <div class="drop-zone">
+              ${s.drops.map((drop, dropIdx) => `
+                <div class="drop-row" data-drop="${dropIdx}">
+                  <span>Drop ${dropIdx + 1}</span>
+                  <input class="drop-input" data-field="w" type="number" inputmode="decimal" step="0.5" value="${drop.w ?? ''}" placeholder="Kg">
+                  <input class="drop-input" data-field="r" type="number" inputmode="numeric" value="${drop.r ?? ''}" placeholder="Reps">
+                  <button class="drop-remove" aria-label="Rimuovi drop ${dropIdx + 1}">×</button>
+                </div>
+              `).join('')}
+              <button class="drop-add" data-action="adddrop">+ Drop set</button>
+            </div>
           </div>
         `).join('')}
       </div>
@@ -583,8 +654,9 @@ function exerciseCard(ex, idx) {
     toggleExpand(ex.id);
   });
 
-  card.querySelectorAll('.set-row').forEach(row => {
-    const setIdx = parseInt(row.dataset.set);
+  card.querySelectorAll('.set-block').forEach(block => {
+    const setIdx = parseInt(block.dataset.set);
+    const row = block.querySelector('.set-row');
     row.querySelectorAll('.set-input').forEach(input => {
       input.addEventListener('input', (e) => {
         const field = e.target.dataset.field;
@@ -596,15 +668,38 @@ function exerciseCard(ex, idx) {
     row.querySelector('[data-action="toggle"]').addEventListener('click', () => {
       sessSets[setIdx].done = !sessSets[setIdx].done;
       if (sessSets[setIdx].done) {
-        startRestTimer(ex.rest, ex.name + ' · serie ' + (setIdx+1), ex.id);
+        unlockTimerAudio();
+        startRestTimer(ex.rest, exerciseDisplayName(ex) + ' · serie ' + (setIdx+1), ex.id);
       }
+      saveSession();
+      render();
+    });
+    block.querySelectorAll('.drop-row').forEach(dropRow => {
+      const dropIdx = parseInt(dropRow.dataset.drop);
+      dropRow.querySelectorAll('.drop-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const field = e.target.dataset.field;
+          const val = e.target.value === '' ? null : parseFloat(e.target.value);
+          sessSets[setIdx].drops[dropIdx][field] = isNaN(val) ? null : val;
+          saveSession();
+        });
+      });
+      dropRow.querySelector('.drop-remove').addEventListener('click', () => {
+        sessSets[setIdx].drops.splice(dropIdx, 1);
+        saveSession();
+        render();
+      });
+    });
+    block.querySelector('[data-action="adddrop"]').addEventListener('click', () => {
+      sessSets[setIdx].done = false;
+      sessSets[setIdx].drops.push({ w:null, r:null });
       saveSession();
       render();
     });
   });
 
   card.querySelector('[data-action="addset"]').addEventListener('click', () => {
-    sessSets.push({ w:null, r:null, done:false });
+    sessSets.push(emptySet());
     saveSession();
     render();
   });
@@ -616,7 +711,7 @@ function exerciseCard(ex, idx) {
     }
   });
   card.querySelector('[data-action="reset"]').addEventListener('click', () => {
-    if (confirm('Cancellare i dati di questa sessione per ' + ex.name + '?')) {
+    if (confirm('Cancellare i dati di questa sessione per ' + exerciseDisplayName(ex) + '?')) {
       state.session.sets[ex.id] = initSets(ex.sets);
       saveSession();
       render();
@@ -629,7 +724,22 @@ function exerciseCard(ex, idx) {
 }
 
 function initSets(n) {
-  return Array.from({length: n}, () => ({ w:null, r:null, done:false }));
+  return Array.from({length: n}, emptySet);
+}
+
+function emptySet() {
+  return { w:null, r:null, done:false, drops:[] };
+}
+
+function normalizeSet(set) {
+  return {
+    w: set?.w ?? null,
+    r: set?.r ?? null,
+    done: Boolean(set?.done),
+    drops: Array.isArray(set?.drops)
+      ? set.drops.map(drop => ({ w:drop?.w ?? null, r:drop?.r ?? null }))
+      : []
+  };
 }
 
 function toggleExpand(id) {
@@ -661,7 +771,7 @@ function renderStats() {
       for (const exId in s.sets) {
         for (const set of s.sets[exId]) {
           if (isCompletedSet(set)) {
-            vol += Number(set.w) * Number(set.r);
+            vol += setVolume(set);
             setsCount++;
           }
         }
@@ -686,9 +796,9 @@ function findLastSessionFor(exId) {
     if (s.sets[exId]) {
       const done = s.sets[exId].filter(isCompletedSet);
       if (done.length === 0) continue;
-      const top = done.reduce((a,b) => (Number(a.w)*Number(a.r) > Number(b.w)*Number(b.r) ? a : b));
-      const summary = done.map(x => `${x.w}×${x.r}`).join(', ');
-      return { date: s.date, summary, top };
+      const top = done.reduce((a,b) => (setVolume(a) > setVolume(b) ? a : b));
+      const summary = done.map(formatSetSummary).join(', ');
+      return { date: s.date, summary, topSummary: formatSetSummary(top) };
     }
   }
   return null;
@@ -696,7 +806,7 @@ function findLastSessionFor(exId) {
 
 function exerciseNamesForSession(session) {
   return (session.exercises || []).reduce((names, ex) => {
-    names[ex.id] = ex.name;
+    names[ex.id] = exerciseDisplayName(ex);
     return names;
   }, {});
 }
@@ -721,8 +831,8 @@ function renderHistory() {
         const sets = s.sets[exId].filter(isCompletedSet);
         if (sets.length === 0) return '';
         const exDef = day && day.exercises.find(e => e.id === exId);
-        const name = s.exerciseNames?.[exId] || (exDef ? exDef.name : exId);
-        return `<div class="h-ex"><b>${esc(name)}</b><span class="sets">${sets.map(x => x.w+'×'+x.r).join(' · ')}</span></div>`;
+        const name = s.exerciseNames?.[exId] || (exDef ? exerciseDisplayName(exDef) : exId);
+        return `<div class="h-ex"><b>${esc(name)}</b><span class="sets">${sets.map(formatSetSummary).join(' · ')}</span></div>`;
       }).join('')}
     `;
     container.appendChild(card);
@@ -741,7 +851,10 @@ function hasSetEntry(set) {
   return Boolean(set && (
     set.done ||
     (set.w !== null && set.w !== undefined && set.w !== '') ||
-    (set.r !== null && set.r !== undefined && set.r !== '')
+    (set.r !== null && set.r !== undefined && set.r !== '') ||
+    (Array.isArray(set.drops) && set.drops.some(drop =>
+      hasNumericValue(drop?.w) || hasNumericValue(drop?.r)
+    ))
   ));
 }
 
@@ -750,7 +863,33 @@ function hasNumericValue(value) {
 }
 
 function isCompletedSet(set) {
-  return Boolean(set && set.done && hasNumericValue(set.w) && hasNumericValue(set.r));
+  return Boolean(
+    set && set.done && hasNumericValue(set.w) && hasNumericValue(set.r) &&
+    (!Array.isArray(set.drops) || set.drops.every(drop =>
+      hasNumericValue(drop?.w) && hasNumericValue(drop?.r)
+    ))
+  );
+}
+
+function setVolume(set) {
+  const main = hasNumericValue(set?.w) && hasNumericValue(set?.r)
+    ? Number(set.w) * Number(set.r)
+    : 0;
+  const drops = (set?.drops || []).reduce((total, drop) => {
+    if (!hasNumericValue(drop?.w) || !hasNumericValue(drop?.r)) return total;
+    return total + Number(drop.w) * Number(drop.r);
+  }, 0);
+  return main + drops;
+}
+
+function formatSetSummary(set) {
+  const parts = [`${set.w}×${set.r}`];
+  for (const drop of set.drops || []) {
+    if (hasNumericValue(drop.w) && hasNumericValue(drop.r)) {
+      parts.push(`${drop.w}×${drop.r}`);
+    }
+  }
+  return parts.join(' → ');
 }
 
 function hasSessionData(session) {
@@ -815,7 +954,12 @@ async function clearHistory() {
 
 /* ============== EXERCISE LIBRARY ============== */
 function savedExerciseLibrary() {
-  return state.exerciseLibrary.map(cloneExercise);
+  return state.exerciseLibrary
+    .map(cloneExercise)
+    .sort((a, b) => {
+      const familyOrder = (a.family || a.name).localeCompare(b.family || b.name, 'it');
+      return familyOrder || (a.variant || '').localeCompare(b.variant || '', 'it');
+    });
 }
 
 function openExerciseLibrary(mode = 'session') {
@@ -847,7 +991,7 @@ function renderExerciseLibrary() {
   const existingIds = new Set((targetExercises || []).map(ex => ex.id));
   const library = savedExerciseLibrary().filter(ex => {
     if (!query) return true;
-    return `${ex.name} ${ex.target} ${LIBRARY_DAY_LABELS[ex.sourceDay] || ''}`
+    return `${ex.name} ${ex.family} ${ex.variant} ${ex.target} ${LIBRARY_DAY_LABELS[ex.sourceDay] || ''}`
       .toLocaleLowerCase('it')
       .includes(query);
   });
@@ -862,8 +1006,8 @@ function renderExerciseLibrary() {
         <label class="library-item ${alreadyAdded ? 'disabled' : ''} ${selected ? 'selected' : ''}">
           <input type="checkbox" value="${esc(ex.id)}" ${alreadyAdded ? 'disabled' : ''} ${selected ? 'checked' : ''}>
           <span>
-            <span class="library-name">${esc(ex.name)}</span>
-            <span class="library-target">${esc(ex.target)}</span>
+            <span class="library-name">${esc(exerciseDisplayName(ex))}</span>
+            <span class="library-target">${esc(ex.family || ex.target)}${ex.family && ex.target ? ` · ${esc(ex.target)}` : ''}</span>
           </span>
           <span class="${alreadyAdded ? 'library-added' : 'library-source'}">
             ${alreadyAdded ? 'Aggiunto' : 'Salvato'}
@@ -919,8 +1063,9 @@ async function removeExerciseFromSession(exId) {
   const ex = state.session.exercises?.find(item => item.id === exId);
   if (!ex) return;
   const hasEnteredData = (state.session.sets[exId] || []).some(hasSetEntry);
-  if (hasEnteredData && !confirm(`Rimuovere "${ex.name}" e i dati inseriti da questa sessione?`)) return;
-  if (!hasEnteredData && !confirm(`Rimuovere "${ex.name}" da questa sessione?`)) return;
+  const displayName = exerciseDisplayName(ex);
+  if (hasEnteredData && !confirm(`Rimuovere "${displayName}" e i dati inseriti da questa sessione?`)) return;
+  if (!hasEnteredData && !confirm(`Rimuovere "${displayName}" da questa sessione?`)) return;
   state.session.exercises = state.session.exercises.filter(item => item.id !== exId);
   delete state.session.sets[exId];
   state.expanded.delete(exId);
@@ -934,7 +1079,7 @@ async function removeExerciseFromTemplate(exId) {
   const day = state.program[state.programDay];
   const ex = day.exercises.find(item => item.id === exId);
   if (!ex) return;
-  if (!confirm(`Togliere "${ex.name}" dallo stato iniziale di questa giornata? L’esercizio resterà tra i salvati.`)) return;
+  if (!confirm(`Togliere "${exerciseDisplayName(ex)}" dallo stato iniziale di questa giornata? L’esercizio resterà tra i salvati.`)) return;
   day.exercises = day.exercises.filter(item => item.id !== exId);
   await saveProgram();
   render();
@@ -958,8 +1103,10 @@ function openEdit(exId, programDay = state.programDay) {
   const ex = state.exerciseLibrary.find(e => e.id === exId)
     || state.program[programDay].exercises.find(e => e.id === exId);
   if (!ex) return;
-  document.getElementById('editTitle').textContent = 'Modifica · ' + ex.name;
+  document.getElementById('editTitle').textContent = 'Modifica · ' + exerciseDisplayName(ex);
   document.getElementById('ed-name').value = ex.name;
+  document.getElementById('ed-family').value = ex.family || '';
+  document.getElementById('ed-variant').value = ex.variant || '';
   document.getElementById('ed-target').value = ex.target;
   document.getElementById('ed-sets').value = ex.sets;
   document.getElementById('ed-reps').value = ex.reps;
@@ -975,6 +1122,8 @@ function openAdd(programDay = state.programDay) {
   state.editingProgramDay = programDay;
   document.getElementById('editTitle').textContent = 'Nuovo esercizio';
   document.getElementById('ed-name').value = '';
+  document.getElementById('ed-family').value = '';
+  document.getElementById('ed-variant').value = '';
   document.getElementById('ed-target').value = '';
   document.getElementById('ed-sets').value = 3;
   document.getElementById('ed-reps').value = '10-12';
@@ -998,6 +1147,8 @@ async function saveEdit() {
   const wasEditing = Boolean(editingId);
   const data = {
     name: document.getElementById('ed-name').value.trim() || 'Esercizio',
+    family: document.getElementById('ed-family').value.trim(),
+    variant: document.getElementById('ed-variant').value.trim(),
     target: document.getElementById('ed-target').value.trim(),
     sets: Math.max(1, parseInt(document.getElementById('ed-sets').value) || 3),
     reps: document.getElementById('ed-reps').value.trim() || '8-12',
@@ -1029,7 +1180,7 @@ async function saveEdit() {
 async function deleteExercise(exId) {
   const ex = state.exerciseLibrary.find(e => e.id === exId);
   if (!ex) return;
-  if (!confirm(`Eliminare definitivamente "${ex.name}" dagli esercizi salvati e da tutti gli stati iniziali?`)) return;
+  if (!confirm(`Eliminare definitivamente "${exerciseDisplayName(ex)}" dagli esercizi salvati e da tutti gli stati iniziali?`)) return;
   state.exerciseLibrary = state.exerciseLibrary.filter(item => item.id !== exId);
   for (const dayKey of LIBRARY_DAYS) {
     if (state.program[dayKey]) {
@@ -1045,6 +1196,50 @@ async function deleteExercise(exId) {
 }
 
 /* ============== REST TIMER ============== */
+function unlockTimerAudio() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+    if (!state.timer.audioContext) state.timer.audioContext = new AudioContextClass();
+    if (state.timer.audioContext.state === 'suspended') {
+      state.timer.audioContext.resume().catch(() => {});
+    }
+    return state.timer.audioContext;
+  } catch (e) {
+    return null;
+  }
+}
+
+function playTimerCompleteSound() {
+  const ctx = state.timer.audioContext;
+  if (!ctx) return;
+
+  const scheduleNotes = () => {
+    if (ctx.state !== 'running') return;
+    const start = ctx.currentTime + 0.02;
+    [740, 880, 1040].forEach((frequency, index) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = index === 2 ? 'square' : 'sine';
+      osc.frequency.value = frequency;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const noteStart = start + index * 0.24;
+      gain.gain.setValueAtTime(0.0001, noteStart);
+      gain.gain.exponentialRampToValueAtTime(index === 2 ? 0.2 : 0.16, noteStart + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.18);
+      osc.start(noteStart);
+      osc.stop(noteStart + 0.2);
+    });
+  };
+
+  if (ctx.state === 'suspended') {
+    ctx.resume().then(scheduleNotes).catch(() => {});
+  } else {
+    scheduleNotes();
+  }
+}
+
 function startRestTimer(seconds, label, exId) {
   stopTimer();
   state.timer.total = seconds;
@@ -1075,19 +1270,9 @@ function startRestTimer(seconds, label, exId) {
       document.getElementById('restTime').textContent = 'GO';
       clearInterval(state.timer.intervalId);
       state.timer.intervalId = null;
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.frequency.value = 880;
-        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.01);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
-        osc.start(); osc.stop(ctx.currentTime + 0.4);
-      } catch(e) {}
+      playTimerCompleteSound();
       // vibrazione su mobile (se supportata)
-      try { if (navigator.vibrate) navigator.vibrate([120, 60, 120]); } catch(e) {}
+      try { if (navigator.vibrate) navigator.vibrate([180, 80, 180, 80, 280]); } catch(e) {}
       setTimeout(() => { elTimer.classList.remove('active','done'); }, 4000);
       return;
     }
@@ -1133,6 +1318,7 @@ function showUpdateBanner(onAccept) {
 
 /* ============== EVENTS ============== */
 function bindEvents() {
+  document.addEventListener('pointerdown', unlockTimerAudio, { once:true });
   document.querySelectorAll('nav.days button').forEach(b => {
     b.addEventListener('click', async () => {
       const nextDay = b.dataset.day;

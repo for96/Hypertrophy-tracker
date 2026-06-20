@@ -72,7 +72,11 @@ I dati sono salvati in `localStorage` del browser Safari/PWA. Persistono finché
 
 La sezione **Scheda** definisce lo stato iniziale persistente di LUN/MER/VEN: permette di aggiungere esercizi salvati, crearne di nuovi, modificarli, rimuoverli dal giorno e cambiarne l'ordine.
 
+La libreria include già una selezione ampia di esercizi fondamentali e varianti per attrezzo o presa (per esempio alzate laterali con manubri, cavo, cavigliera e multi flight). I nuovi esercizi di base vengono aggiunti anche alle installazioni esistenti senza modificare le giornate configurate dall'utente.
+
 Durante un allenamento gli esercizi si possono aggiungere o togliere liberamente senza modificare la Scheda. Alla chiusura o al reset, una nuova sessione standard riparte dal relativo stato iniziale. La Sessione libera riparte invece vuota.
+
+Ogni serie può contenere uno o più segmenti **drop set**, ciascuno con peso e ripetizioni propri. Volume e storico includono anche i segmenti drop. Il timer di recupero usa un avviso sonoro a tre toni e, quando supportata, una vibrazione finale.
 
 Programma, libreria esercizi, sessioni e storico persistono in `localStorage`. Per un reset completo cancella le chiavi `program-v1`, `exercise-library-v1`, `sessions-current-v2`, `session-current` e `history`.
 
